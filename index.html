@@ -1,37 +1,243 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Birthday Cake</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>لعبة اختيار اسم عشوائي</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+            background-color: #f0f8ff;
+            margin: 0;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            display: none;
+        }
+        h1, h2, th, td {
+            color: #333;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 80%;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .tab-buttons {
+            margin: 20px;
+        }
+        .tab-buttons button {
+            width: 120px;
+            margin: 5px;
+        }
+        .header {
+            display: flex;
+            justify-content: center;
+            margin: 20px;
+        }
+    </style>
+    <!-- تحميل مكتبة Tagify -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.5/tagify.css">
 </head>
 <body>
-    <div class="cake">
-        <!-- Cake Layers -->
-        <div class="cake-layer pink"></div>
-        <div class="cake-layer purple"></div>
-        <div class="cake-layer green"></div>
-        <div class="cake-layer copper"></div>
-        
-        <!-- Toppings -->
-        <div class="topping red" style="top: 50px; left: 30px;"></div>
-        <div class="topping yellow" style="top: 50px; left: 90px;"></div>
-        <div class="topping blue" style="top: 50px; right: 90px;"></div>
-        <div class="topping orange" style="top: 50px; right: 30px;"></div>
-        
-        <!-- Candle -->
-        <div class="candle">
-            <div class="flame"></div>
-            <div class="candle-stick"></div>
-        </div>
-        
-        <!-- Stick and Circle -->
-        <div class="stick"></div>
-        <div class="circle">
-            <p class="circle-text happy">Happy</p>
-            <p class="circle-text birthday">Birthday</p>
+
+    <div class="header">
+        <button onclick="showPage('gamePage')">اللعبة</button>
+        <button onclick="showPage('settingsPage')">لوحة التحكم</button>
+    </div>
+
+    <!-- صفحة اللعبة -->
+    <div class="container" id="gamePage">
+        <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
+        <button onclick="startGame()">اختر اسم عشوائي</button>
+        <h2 id="chosenName"></h2>
+        <div id="amountInput" style="display: none;">
+            <label for="amount">أدخل المبلغ:</label><br>
+            <input type="number" id="amount" placeholder="أدخل المبلغ" onkeydown="checkEnter(event)"><br>
+            <button onclick="saveAndNext()">التالي</button>
         </div>
     </div>
+
+    <!-- لوحة التحكم -->
+    <div class="container" id="settingsPage">
+        <h1>إعدادات اللعبة</h1>
+        <label for="titleInput">العنوان:</label>
+        <input type="text" id="titleInput" placeholder="أدخل عنوان اللعبة"><br>
+        <label for="namesInput">الأسماء:</label>
+        <input type="text" id="namesInput" placeholder="أدخل الأسماء كـ تاغات"><br>
+        <label for="endTitleInput">عنوان نهاية اللعبة:</label>
+        <input type="text" id="endTitleInput" placeholder="أدخل عنوان النهاية"><br>
+        <button onclick="saveSettings()">حفظ الإعدادات</button>
+
+        <h2>الأسماء والمبالغ المدخلة</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>المبلغ</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTableBody"></tbody>
+        </table>
+        <h2 id="totalAmount">المبلغ الإجمالي: 0 ريال</h2>
+        <button onclick="printData()">طباعة البيانات</button>
+    </div>
+
+    <!-- صفحة نهاية اللعبة -->
+    <div class="container" id="endPage">
+        <h1 id="endTitle">نهاية اللعبة</h1>
+    </div>
+
+    <!-- تحميل مكتبة Tagify -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.5/tagify.min.js"></script>
+    <script>
+        const gameTitleElement = document.getElementById("gameTitle");
+        const namesInput = document.getElementById("namesInput");
+        const tagify = new Tagify(namesInput);
+        let remainingNames = [];
+        const savedData = [];
+        let endTitle = 'نهاية اللعبة';
+
+        // عرض الصفحة المحددة
+        function showPage(pageId) {
+            document.getElementById("gamePage").style.display = "none";
+            document.getElementById("settingsPage").style.display = "none";
+            document.getElementById("endPage").style.display = "none";
+            document.getElementById(pageId).style.display = "block";
+        }
+
+        // البدء باللعبة واختيار اسم عشوائي
+        function startGame() {
+            document.querySelector('.header').style.display = 'none'; // إخفاء الأزرار
+            if (remainingNames.length === 0) {
+                alert("يرجى ضبط الإعدادات وإضافة الأسماء");
+                return;
+            }
+            pickRandomName();
+        }
+
+        function pickRandomName() {
+            if (remainingNames.length === 0) {
+                endGame();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * remainingNames.length);
+            const chosenName = remainingNames[randomIndex];
+            document.getElementById("chosenName").innerText = "الاسم المختار هو: " + chosenName;
+            document.getElementById("amountInput").style.display = "block";
+            remainingNames.splice(randomIndex, 1); 
+        }
+
+        // حفظ الاسم والمبلغ والانتقال إلى الاسم التالي
+        function saveAndNext() {
+            const chosenName = document.getElementById("chosenName").innerText.split(": ")[1];
+            const amount = document.getElementById("amount").value;
+
+            if (amount === "") {
+                alert("يرجى إدخال المبلغ.");
+                return;
+            }
+
+            savedData.push({ name: chosenName, amount: parseFloat(amount) });
+            updateTable();
+            updateTotalAmount(); // تحديث المبلغ الإجمالي في لوحة التحكم
+            document.getElementById("amount").value = "";
+            pickRandomName();
+        }
+
+        // التحقق من الضغط على Enter لحفظ البيانات
+        function checkEnter(event) {
+            if (event.key === "Enter") {
+                saveAndNext();
+            }
+        }
+
+        // إنهاء اللعبة وعرض صفحة النهاية
+        function endGame() {
+            document.getElementById("endTitle").innerText = endTitle;
+            setTimeout(() => {
+                document.querySelector('.header').style.display = 'block'; // إظهار الأزرار بعد دقيقة
+            }, 60000);
+            showPage('endPage');
+        }
+
+        // حفظ الإعدادات وتحديث واجهة اللعبة
+        function saveSettings() {
+            const title = document.getElementById("titleInput").value;
+            const endTitleInput = document.getElementById("endTitleInput").value;
+            const tags = tagify.value;
+
+            if (title) gameTitleElement.innerText = title;
+            if (endTitleInput) endTitle = endTitleInput;
+            if (tags.length > 0) {
+                remainingNames = tags.map(tag => tag.value);
+                alert("تم حفظ الإعدادات بنجاح.");
+            } else {
+                alert("يرجى إدخال الأسماء.");
+            }
+        }
+
+        // تحديث الجدول في لوحة التحكم
+        function updateTable() {
+            const tableBody = document.getElementById("resultsTableBody");
+            tableBody.innerHTML = "";
+            savedData.forEach(entry => {
+                const row = `<tr><td>${entry.name}</td><td>${entry.amount}</td></tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // تحديث المبلغ الإجمالي في لوحة التحكم
+        function updateTotalAmount() {
+            const total = savedData.reduce((sum, entry) => sum + entry.amount, 0);
+            document.getElementById("totalAmount").innerText = "المبلغ الإجمالي: " + total + " ريال";
+        }
+
+        // طباعة البيانات المدخلة
+        function printData() {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>طباعة البيانات</title></head><body>');
+            printWindow.document.write('<h1>' + gameTitleElement.innerText + '</h1>');
+            printWindow.document.write('<table border="1"><tr><th>الاسم</th><th>المبلغ</th></tr>');
+            savedData.forEach(entry => {
+                printWindow.document.write('<tr><td>' + entry.name + '</td><td>' + entry.amount + '</td></tr>');
+            });
+            printWindow.document.write('</table></body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // إظهار لوحة التحكم كصفحة افتراضية
+        showPage('settingsPage');
+    </script>
+
 </body>
 </html>
