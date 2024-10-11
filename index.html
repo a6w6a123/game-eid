@@ -247,13 +247,14 @@
             document.getElementById("totalAmount").innerText = "المبلغ الإجمالي: " + total + " ريال";
         }
 
-        // دالة لطباعة البيانات
+        // دالة لطباعة البيانات كجدول
         function printData() {
             const title = document.getElementById("titleInput").value || "إعدادات اللعبة";
-            let printContent = `<h1>${title}</h1>`;
+            let printContent = `<h1>${title}</h1><table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="border: 1px solid #ddd; padding: 8px;">الاسم</th><th style="border: 1px solid #ddd; padding: 8px;">المبلغ</th></tr></thead><tbody>`;
             savedData.forEach(entry => {
-                printContent += `<p>${entry.name}: ${entry.amount} ريال</p>`;
+                printContent += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${entry.name}</td><td style="border: 1px solid #ddd; padding: 8px;">${entry.amount} ريال</td></tr>`;
             });
+            printContent += `</tbody></table>`;
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`<html><head><title>${title}</title></head><body>${printContent}</body></html>`);
             printWindow.document.close();
