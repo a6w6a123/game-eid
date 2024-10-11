@@ -129,8 +129,8 @@
         const gameTitleElement = document.getElementById("gameTitle");
         const namesInput = document.getElementById("namesInput");
         const tagify = new Tagify(namesInput);
-        let remainingNames = [];
-        const savedData = [];
+        let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
+        const savedData = JSON.parse(localStorage.getItem('savedData')) || [];
         let endTitle = 'نهاية اللعبة';
 
         // عرض الصفحة المحددة
@@ -141,6 +141,8 @@
             document.getElementById(pageId).style.display = "block";
             if (pageId === 'settingsPage') {
                 displayAvailableNames(); // عرض الأسماء المتاحة في لوحة التحكم
+                updateTable(); // تحديث الجدول بالبيانات المحفوظة
+                updateTotalAmount(); // تحديث المبلغ الإجمالي
             }
         }
 
@@ -171,6 +173,7 @@
             document.getElementById("chosenName").innerText = "الاسم المختار هو: " + chosenName;
             document.getElementById("amountInput").style.display = "block";
             remainingNames.splice(randomIndex, 1); 
+            localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // تحديث الأسماء المتبقية
         }
 
         // حفظ الاسم والمبلغ والانتقال إلى الاسم التالي
@@ -185,6 +188,8 @@
 
             // حفظ البيانات المدخلة
             savedData.push({ name: chosenName, amount: parseFloat(amount) });
+            localStorage.setItem('savedData', JSON.stringify(savedData)); // حفظ البيانات في localStorage
+
             updateTable();
             updateTotalAmount(); // تحديث المبلغ الإجمالي في لوحة التحكم
             document.getElementById("amount").value = "";
@@ -218,6 +223,7 @@
             if (endTitleInput) endTitle = endTitleInput;
             if (tags.length > 0) {
                 remainingNames = tags.map(tag => tag.value);
+                localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // حفظ الأسماء في localStorage
                 alert("تم حفظ الإعدادات بنجاح.");
             } else {
                 alert("يرجى إدخال الأسماء.");
@@ -235,7 +241,7 @@
             });
         }
 
-        // تحديث المبلغ الإجمالي في لوحة التحكم
+        // تحديث المبلغ الإجمالي
         function updateTotalAmount() {
             const total = savedData.reduce((sum, entry) => sum + entry.amount, 0);
             document.getElementById("totalAmount").innerText = "المبلغ الإجمالي: " + total + " ريال";
