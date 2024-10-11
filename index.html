@@ -183,6 +183,7 @@
                 return;
             }
 
+            // حفظ البيانات المدخلة
             savedData.push({ name: chosenName, amount: parseFloat(amount) });
             updateTable();
             updateTotalAmount(); // تحديث المبلغ الإجمالي في لوحة التحكم
@@ -240,7 +241,7 @@
             document.getElementById("totalAmount").innerText = "المبلغ الإجمالي: " + total + " ريال";
         }
 
-        // طباعة البيانات المدخلة
+        // دالة لطباعة البيانات
         function printData() {
             const title = document.getElementById("titleInput").value || "إعدادات اللعبة";
             let printContent = `<h1>${title}</h1>`;
