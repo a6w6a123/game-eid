@@ -67,6 +67,14 @@
             text-align: right;
             direction: rtl;
         }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+        }
     </style>
     <!-- تحميل مكتبة Tagify -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.5/tagify.css">
@@ -107,6 +115,7 @@
                 <tr>
                     <th>الاسم</th>
                     <th>المبلغ</th>
+                    <th>حذف</th>
                 </tr>
             </thead>
             <tbody id="resultsTableBody"></tbody>
@@ -225,18 +234,30 @@
                 remainingNames = tags.map(tag => tag.value);
                 localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // حفظ الأسماء في localStorage
                 alert("تم حفظ الإعدادات بنجاح.");
+                displayAvailableNames(); // تحديث الأسماء المتاحة
             } else {
                 alert("يرجى إدخال الأسماء.");
             }
-            displayAvailableNames(); // تحديث عرض الأسماء بعد حفظ الإعدادات
         }
 
-        // تحديث الجدول في لوحة التحكم
+        // حذف المدخل من البيانات المحفوظة وتحديث العرض
+        function deleteEntry(index) {
+            savedData.splice(index, 1);
+            localStorage.setItem('savedData', JSON.stringify(savedData)); // تحديث البيانات في localStorage
+            updateTable();
+            updateTotalAmount();
+        }
+
+        // تحديث الجدول في لوحة التحكم مع زر الحذف
         function updateTable() {
             const tableBody = document.getElementById("resultsTableBody");
             tableBody.innerHTML = "";
-            savedData.forEach(entry => {
-                const row = `<tr><td>${entry.name}</td><td>${entry.amount}</td></tr>`;
+            savedData.forEach((entry, index) => {
+                const row = `<tr>
+                                <td>${entry.name}</td>
+                                <td>${entry.amount}</td>
+                                <td><button class="delete-btn" onclick="deleteEntry(${index})">حذف</button></td>
+                             </tr>`;
                 tableBody.innerHTML += row;
             });
         }
