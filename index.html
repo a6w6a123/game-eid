@@ -85,6 +85,10 @@
     </style>
     <!-- تحميل مكتبة Tagify -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.5/tagify.css">
+    <!-- تحميل مكتبة Winwheel.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Winwheel.js/2.7.0/Winwheel.min.js"></script>
+    <!-- تحميل مكتبة GreenSock لتدوير العجلة -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 </head>
 <body>
 
@@ -96,8 +100,8 @@
     <!-- صفحة اللعبة -->
     <div class="container" id="gamePage">
         <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
-        <button onclick="startGame()">اختر اسم عشوائي</button>
-        <h2 id="loader">جاري اختيار الاسم...</h2>
+        <canvas id="wheelCanvas" width="400" height="400"></canvas>
+        <button onclick="startSpin()">اختر اسم عشوائي</button>
         <h2 id="chosenName"></h2>
         <div id="amountInput" style="display: none;">
             <label for="amount">أدخل المبلغ:</label><br>
@@ -115,6 +119,8 @@
         <input type="text" id="namesInput" placeholder="أدخل الأسماء كـ تاغات"><br>
         <label for="endTitleInput">عنوان نهاية اللعبة:</label>
         <input type="text" id="endTitleInput" placeholder="أدخل عنوان النهاية"><br>
+        <label for="durationInput">مدة عرض الاسم (بالثواني):</label>
+        <input type="number" id="durationInput" value="10" min="1"><br>
         <button onclick="saveSettings()">حفظ الإعدادات</button>
 
         <h2>الأسماء والمبالغ المدخلة</h2>
@@ -140,7 +146,6 @@
         <h1 id="endTitle">نهاية اللعبة</h1>
     </div>
 
-    <!-- تحميل مكتبة Tagify -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.5/tagify.min.js"></script>
     <script>
         const gameTitleElement = document.getElementById("gameTitle");
@@ -149,6 +154,7 @@
         let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
         const savedData = JSON.parse(localStorage.getItem('savedData')) || [];
         let endTitle = 'نهاية اللعبة';
+        let wheel; // لتخزين العجلة
 
         // عرض الصفحة المحددة
         function showPage(pageId) {
@@ -160,46 +166,47 @@
                 displayAvailableNames();
                 updateTable();
                 updateTotalAmount();
+            } else if (pageId === 'gamePage') {
+                setupWheel(); // إعداد العجلة عند الدخول إلى صفحة اللعبة
             }
         }
 
-        // عرض الأسماء المتاحة
-        function displayAvailableNames() {
-            const namesList = document.getElementById("namesList");
-            namesList.innerHTML = remainingNames.map(name => `<div>${name}</div>`).join('');
+        // إعداد العجلة باستخدام Winwheel.js
+        function setupWheel() {
+            wheel = new Winwheel({
+                canvasId: "wheelCanvas",
+                numSegments: remainingNames.length,
+                segments: remainingNames.map(name => ({ fillStyle: getRandomColor(), text: name })),
+                animation: {
+                    type: "spinToStop",
+                    duration: 5,
+                    spins: 8,
+                    callbackFinished: alertName
+                }
+        });
         }
 
-        // البدء باللعبة واختيار اسم عشوائي مع تأثير التوتر
-        function startGame() {
-            document.querySelector('.header').style.display = 'none'; // إخفاء الأزرار
+        // دالة لتوليد لون عشوائي
+        function getRandomColor() {
+            return "#" + Math.floor(Math.random()*16777215).toString(16);
+        }
+
+        // دالة لتشغيل العجلة
+        function startSpin() {
             if (remainingNames.length === 0) {
                 alert("يرجى ضبط الإعدادات وإضافة الأسماء");
                 return;
             }
-            document.getElementById("loader").style.display = "block";
-            document.getElementById("chosenName").innerText = "";
-            let counter = 0;
-
-            const intervalId = setInterval(() => {
-                const randomIndex = Math.floor(Math.random() * remainingNames.length);
-                document.getElementById("loader").innerText = "الاسم الحالي: " + remainingNames[randomIndex];
-                counter += 0.5;
-                if (counter >= 20) {
-                    clearInterval(intervalId);
-                    pickRandomName();
-                }
-            }, 500); // تغيير الاسم كل نصف ثانية
+            wheel.startAnimation();
         }
 
-        // اختيار الاسم النهائي بعد انتهاء تأثير التوتر
-        function pickRandomName() {
-            document.getElementById("loader").style.display = "none";
-            const randomIndex = Math.floor(Math.random() * remainingNames.length);
-            const chosenName = remainingNames[randomIndex];
+        // دالة لعرض الاسم الفائز
+        function alertName(indicatedSegment) {
+            const chosenName = indicatedSegment.text;
             document.getElementById("chosenName").innerText = "الاسم المختار هو: " + chosenName;
             document.getElementById("amountInput").style.display = "block";
-            remainingNames.splice(randomIndex, 1);
-            localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
+            remainingNames = remainingNames.filter(name => name !== chosenName); // إزالة الاسم المختار
+            localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // حفظ الأسماء المتبقية
         }
 
         // حفظ الاسم والمبلغ والانتقال إلى الاسم التالي
@@ -219,7 +226,11 @@
             updateTotalAmount();
             document.getElementById("amount").value = "";
             alert("تم حفظ البيانات بنجاح.");
-            startGame();
+            if (remainingNames.length > 0) {
+                setupWheel(); // إعداد العجلة مرة أخرى
+            } else {
+                endGame(); // إنهاء اللعبة إذا لم يتبقى أسماء
+            }
         }
 
         // التحقق من الضغط على Enter لحفظ البيانات
@@ -229,32 +240,22 @@
             }
         }
 
-        // إنهاء اللعبة وعرض صفحة النهاية
-        function endGame() {
-            document.getElementById("endTitle").innerText = endTitle;
-            setTimeout(() => {
-                document.querySelector('.header').style.display = 'block';
-            }, 60000);
-            showPage('endPage');
+        // تحديث الجدول
+        function updateTable() {
+            const tableBody = document.getElementById("resultsTableBody");
+            tableBody.innerHTML = ""; // مسح الجدول الحالي
+            savedData.forEach((data, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${data.name}</td>
+                    <td>${data.amount} ريال</td>
+                    <td><button class="delete-btn" onclick="deleteEntry(${index})">حذف</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
         }
 
-        // حفظ الإعدادات وتحديث الأسماء المتاحة
-        function saveSettings() {
-            endTitle = document.getElementById("endTitleInput").value || endTitle;
-            const title = document.getElementById("titleInput").value;
-            const names = tagify.value.map(tag => tag.value);
-
-            if (names.length > 0) {
-                remainingNames = names;
-                localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
-                alert("تم حفظ الإعدادات بنجاح.");
-                displayAvailableNames();
-            } else {
-                alert("يرجى إدخال الأسماء.");
-            }
-        }
-
-        // حذف المدخل من البيانات المحفوظة وتحديث العرض
+        // حذف مدخل من البيانات
         function deleteEntry(index) {
             savedData.splice(index, 1);
             localStorage.setItem('savedData', JSON.stringify(savedData));
@@ -262,42 +263,68 @@
             updateTotalAmount();
         }
 
-        // تحديث الجدول في لوحة التحكم مع زر الحذف
-        function updateTable() {
-            const tableBody = document.getElementById("resultsTableBody");
-            tableBody.innerHTML = "";
-            savedData.forEach((entry, index) => {
-                const row = `<tr>
-                                <td>${entry.name}</td>
-                                <td>${entry.amount}</td>
-                                <td><button class="delete-btn" onclick="deleteEntry(${index})">حذف</button></td>
-                             </tr>`;
-                tableBody.innerHTML += row;
-            });
-        }
-
         // تحديث المبلغ الإجمالي
         function updateTotalAmount() {
-            const total = savedData.reduce((sum, entry) => sum + entry.amount, 0);
+            const total = savedData.reduce((sum, data) => sum + data.amount, 0);
             document.getElementById("totalAmount").innerText = "المبلغ الإجمالي: " + total + " ريال";
         }
 
-        // طباعة البيانات كجدول
-        function printData() {
-            const title = document.getElementById("titleInput").value || "إعدادات اللعبة";
-            let printContent = `<h1>${title}</h1><table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="border: 1px solid #ddd; padding: 8px;">الاسم</th><th style="border: 1px solid #ddd; padding: 8px;">المبلغ</th></tr></thead><tbody>`;
-            savedData.forEach(entry => {
-                printContent += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${entry.name}</td><td style="border: 1px solid #ddd; padding: 8px;">${entry.amount} ريال</td></tr>`;
-            });
-            printContent += `</tbody></table>`;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`<html><head><title>${title}</title></head><body>${printContent}</body></html>`);
-            printWindow.document.close();
-            printWindow.print();
+        // إعداد الإعدادات
+        function saveSettings() {
+            const title = document.getElementById("titleInput").value;
+            const names = tagify.value.map(item => item.value);
+            endTitle = document.getElementById("endTitleInput").value;
+            const duration = document.getElementById("durationInput").value;
+
+            if (title) {
+                gameTitleElement.innerText = title;
+            }
+            if (names.length > 0) {
+                remainingNames = names;
+                localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
+            }
+            alert("تم حفظ الإعدادات.");
+            displayAvailableNames();
         }
 
-        showPage('settingsPage');
-    </script>
+        // عرض الأسماء المتاحة
+        function displayAvailableNames() {
+            const namesList = document.getElementById("namesList");
+            namesList.innerHTML = ""; // مسح القائمة الحالية
+            remainingNames.forEach(name => {
+                const div = document.createElement("div");
+                div.innerText = name;
+                namesList.appendChild(div);
+            });
+        }
 
+        // إنهاء اللعبة
+        function endGame() {
+            document.getElementById("gamePage").style.display = "none";
+            document.getElementById("endTitle").innerText = endTitle;
+            document.getElementById("endPage").style.display = "block";
+        }
+
+        // طباعة البيانات
+        function printData() {
+            const dataToPrint = savedData.map(data => `الاسم: ${data.name}, المبلغ: ${data.amount} ريال`).join('\n');
+            const newWindow = window.open('', '', 'width=600,height=400');
+            newWindow.document.write('<pre>' + dataToPrint + '</pre>');
+            newWindow.document.close();
+            newWindow.print();
+        }
+
+        // تحميل الأسماء المتبقية عند تحميل الصفحة
+        window.onload = function() {
+            remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
+            savedData = JSON.parse(localStorage.getItem('savedData')) || [];
+            if (remainingNames.length === 0) {
+                alert("يرجى ضبط الإعدادات وإضافة الأسماء أولاً.");
+                showPage('settingsPage'); // عرض لوحة التحكم إذا لم توجد أسماء
+            } else {
+                showPage('gamePage'); // عرض صفحة اللعبة
+            }
+        };
+    </script>
 </body>
 </html>
