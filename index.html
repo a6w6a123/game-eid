@@ -21,7 +21,7 @@
             border-radius: 10px;
             display: none;
         }
-        h1, h2, th, td {
+        h1, h2 {
             color: #333;
         }
         input, button {
@@ -41,55 +41,80 @@
         button:hover {
             background-color: #45a049;
         }
+        .names-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .name {
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 80%;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .number {
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 80%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .disabled {
+            background-color: #f44336; /* لون للشطب */
+            color: white;
+            text-decoration: line-through;
+        }
+        .highlight {
+            background-color: #ffd700; /* لون للتأثير عند اختيار الاسم */
+        }
+        .flash {
+            background-color: red; /* اللون الأحمر لتأثير الاختيار */
+            color: white;
+            animation: flash 0.5s infinite alternate; /* إضافة تأثير الوميض */
+        }
+        .shake {
+            animation: shake 0.5s; /* تأثير الاهتزاز */
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 0); }
+            25% { transform: translate(-1px, 0); }
+            50% { transform: translate(1px, 0); }
+            75% { transform: translate(-1px, 0); }
+            100% { transform: translate(0, 0); }
+        }
         table {
             width: 100%;
-            margin-top: 20px;
             border-collapse: collapse;
+            margin-top: 20px;
         }
         th, td {
+            border: 1px solid #ccc;
             padding: 10px;
-            border: 1px solid #ddd;
+            text-align: center;
         }
-        .tab-buttons {
-            margin: 20px;
-        }
-        .tab-buttons button {
-            width: 120px;
-            margin: 5px;
-        }
-        .header {
-            display: flex;
-            justify-content: center;
-            margin: 20px;
-        }
-        #namesList {
-            margin-top: 20px;
-            text-align: right;
-            direction: rtl;
-        }
-        .delete-btn {
+        .delete-button {
             background-color: #f44336;
-            color: white;
             border: none;
+            color: white;
+            padding: 5px 10px;
             cursor: pointer;
-            padding: 5px;
             border-radius: 5px;
         }
-        #loader {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            display: none;
-            margin-top: 20px;
-        }
-        #wheelCanvas {
-            margin: 20px auto;
+        .tag {
+            display: inline-block;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            padding: 5px;
+            margin: 5px;
+            cursor: default;
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.5/tagify.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.5/tagify.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/winwheel/2.8.0/Winwheel.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
 </head>
 <body>
 
@@ -101,15 +126,21 @@
     <!-- صفحة اللعبة -->
     <div class="container" id="gamePage">
         <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
-        <button onclick="startGame()">اختر اسم عشوائي</button>
-        <h2 id="loader">جاري اختيار الاسم...</h2>
-        <h2 id="chosenName"></h2>
+        <button onclick="startGame()">ابدأ اللعبة</button>
+        <h2 id="timer"></h2>
+        <div class="names-container" id="namesContainer"></div>
+        
         <div id="amountInput" style="display: none;">
             <label for="amount">أدخل المبلغ:</label><br>
-            <input type="number" id="amount" placeholder="أدخل المبلغ" onkeydown="checkEnter(event)"><br>
-            <button onclick="saveAndNext()">التالي</button>
+            <input type="number" id="amount" placeholder="أدخل المبلغ"><br>
         </div>
-        <canvas id="wheelCanvas" width="400" height="400" style="display:none;"></canvas>
+
+        <div id="numbersInput" style="display: none;">
+            <label for="numbers">اختر الأرقام المتاحة:</label><br>
+            <div id="availableNumbersContainer"></div>
+        </div>
+
+        <button onclick="saveAndNext()" style="display: none;" id="saveButton">حفظ</button>
     </div>
 
     <!-- لوحة التحكم -->
@@ -117,197 +148,217 @@
         <h1>إعدادات اللعبة</h1>
         <label for="titleInput">العنوان:</label>
         <input type="text" id="titleInput" placeholder="أدخل عنوان اللعبة"><br>
+        
         <label for="namesInput">الأسماء:</label>
-        <input type="text" id="namesInput" placeholder="أدخل الأسماء كـ تاغات"><br>
-        <label for="endTitleInput">عنوان نهاية اللعبة:</label>
-        <input type="text" id="endTitleInput" placeholder="أدخل عنوان النهاية"><br>
-        <label for="spinDuration">مدة عرض الاسم (ثواني):</label>
-        <input type="number" id="spinDuration" value="10"><br>
+        <div id="tagsContainer" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; width: 80%; margin: 10px auto;">
+            <input type="text" id="nameInput" placeholder="أدخل الأسماء كـ تاغات" onkeydown="addTag(event)">
+        </div>
+        <div id="tagsDisplay"></div>
+        
         <button onclick="saveSettings()">حفظ الإعدادات</button>
 
-        <h2>الأسماء والمبالغ المدخلة</h2>
-        <table>
+        <h2>البيانات المحفوظة</h2>
+        <table id="dataTable">
             <thead>
                 <tr>
                     <th>الاسم</th>
                     <th>المبلغ</th>
+                    <th>الرقم</th>
                     <th>حذف</th>
                 </tr>
             </thead>
-            <tbody id="resultsTableBody"></tbody>
+            <tbody id="dataBody"></tbody>
         </table>
-        <h2 id="totalAmount">المبلغ الإجمالي: 0 ريال</h2>
-        <button onclick="printData()">طباعة البيانات</button>
-
-        <h2>الأسماء المتاحة</h2>
-        <div id="namesList"></div>
-    </div>
-
-    <!-- صفحة نهاية اللعبة -->
-    <div class="container" id="endPage">
-        <h1 id="endTitle">نهاية اللعبة</h1>
     </div>
 
     <script>
         const gameTitleElement = document.getElementById("gameTitle");
-        const namesInput = document.getElementById("namesInput");
-        const tagify = new Tagify(namesInput);
+        const nameInput = document.getElementById("nameInput");
+        const tagsDisplay = document.getElementById("tagsDisplay");
         let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
-        const savedData = JSON.parse(localStorage.getItem('savedData')) || [];
-        let endTitle = 'نهاية اللعبة';
-        let wheel;
+        let savedData = JSON.parse(localStorage.getItem('savedData')) || [];
 
         // عرض الصفحة المحددة
         function showPage(pageId) {
             document.getElementById("gamePage").style.display = "none";
             document.getElementById("settingsPage").style.display = "none";
-            document.getElementById("endPage").style.display = "none";
             document.getElementById(pageId).style.display = "block";
             if (pageId === 'settingsPage') {
-                displayAvailableNames();
-                updateTable();
-                updateTotalAmount();
-            }
-            if (pageId === 'gamePage') {
-                setupWheel();
+                displaySavedData(); // عرض البيانات المحفوظة في الجدول
+            } else if (pageId === 'gamePage') {
+                displayNames(); // عرض الأسماء في اللعبة
             }
         }
 
-        // إعداد العجلة
-        function setupWheel() {
-            wheel = new Winwheel({
-                canvasId: "wheelCanvas",
-                numSegments: remainingNames.length,
-                segments: remainingNames.map(name => ({ fillStyle: getRandomColor(), text: name })),
-                animation: {
-                    type: "spinToStop",
-                    duration: 5,
-                    spins: 8,
-                    callbackFinished: alertName
+        // إضافة تاغ عند إدخال الاسم
+        function addTag(event) {
+            if (event.key === "Enter" && nameInput.value.trim() !== "") {
+                const tag = nameInput.value.trim();
+                if (!remainingNames.includes(tag)) { // تحقق من عدم وجود الاسم بالفعل
+                    remainingNames.push(tag);
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'tag';
+                    tagElement.innerText = tag;
+
+                    // زر الحذف
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerText = "حذف";
+                    deleteButton.className = "delete-button";
+                    deleteButton.onclick = function() {
+                        tagElement.remove(); // حذف التاغ عند النقر عليه
+                        remainingNames = remainingNames.filter(name => name !== tag);
+                        localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // حفظ الأسماء المحدثة
+                        displayNames(); // تحديث الأسماء في اللعبة
+                    };
+
+                    tagElement.appendChild(deleteButton); // إضافة زر الحذف إلى التاغ
+                    tagsDisplay.appendChild(tagElement);
+                    nameInput.value = ""; // تفريغ حقل الإدخال
+                    displayNames(); // تحديث الأسماء في اللعبة
                 }
-        });
-        }
-
-        // عرض الأسماء المتاحة
-        function displayAvailableNames() {
-            const namesList = document.getElementById("namesList");
-            namesList.innerHTML = remainingNames.map(name => `<div>${name}</div>`).join('');
-        }
-
-        // البدء باللعبة واختيار اسم عشوائي مع تأثير التوتر
-        function startGame() {
-            document.querySelector('.header').style.display = 'none'; // إخفاء الأزرار
-            if (remainingNames.length === 0) {
-                alert("يرجى ضبط الإعدادات وإضافة الأسماء");
-                return;
             }
-            document.getElementById("loader").style.display = "block";
-            document.getElementById("chosenName").innerText = "";
-            document.getElementById("wheelCanvas").style.display = "block"; // إظهار العجلة
-
-            // بدء دوران العجلة مع الصوت
-            wheel.startAnimation();
-            setTimeout(() => {
-                wheel.stopAnimation();
-                const chosenName = wheel.getIndicatedSegment().text; // الحصول على الاسم
-                document.getElementById("chosenName").innerText = "الاسم المختار هو: " + chosenName;
-                document.getElementById("amountInput").style.display = "block";
-                remainingNames = remainingNames.filter(name => name !== chosenName);
-                localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
-                document.getElementById("loader").style.display = "none";
-            }, parseInt(document.getElementById("spinDuration").value) * 1000); // الحصول على مدة الدوران من المدخلات
-        }
-
-        // حفظ الاسم والمبلغ والانتقال إلى الاسم التالي
-        function saveAndNext() {
-            const chosenName = document.getElementById("chosenName").innerText.split(": ")[1];
-            const amount = document.getElementById("amount").value;
-
-            if (amount === "") {
-                alert("يرجى إدخال المبلغ.");
-                return;
-            }
-
-            savedData.push({ name: chosenName, amount: parseFloat(amount) });
-            localStorage.setItem('savedData', JSON.stringify(savedData));
-            updateTable();
-            updateTotalAmount();
-            document.getElementById("amount").value = ""; // إعادة تعيين المدخل
-            document.getElementById("amountInput").style.display = "none"; // إخفاء المدخل
-            startGame(); // البدء باللعبة مرة أخرى
-        }
-
-        // تحديث الجدول
-        function updateTable() {
-            const resultsTableBody = document.getElementById("resultsTableBody");
-            resultsTableBody.innerHTML = savedData.map((data, index) => `
-                <tr>
-                    <td>${data.name}</td>
-                    <td>${data.amount.toFixed(2)}</td>
-                    <td><button class="delete-btn" onclick="deleteEntry(${index})">حذف</button></td>
-                </tr>
-            `).join('');
-        }
-
-        // حذف إدخال
-        function deleteEntry(index) {
-            savedData.splice(index, 1);
-            localStorage.setItem('savedData', JSON.stringify(savedData));
-            updateTable();
-            updateTotalAmount();
-        }
-
-        // تحديث المبلغ الإجمالي
-        function updateTotalAmount() {
-            const totalAmount = savedData.reduce((total, data) => total + data.amount, 0);
-            document.getElementById("totalAmount").innerText = "المبلغ الإجمالي: " + totalAmount.toFixed(2) + " ريال";
         }
 
         // حفظ الإعدادات
         function saveSettings() {
-            const title = document.getElementById("titleInput").value;
-            const names = tagify.value.map(tag => tag.value);
-            endTitle = document.getElementById("endTitleInput").value || endTitle;
-            const spinDuration = document.getElementById("spinDuration").value;
+            localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
+            alert("تم حفظ الإعدادات!");
+            nameInput.value = ''; // تفريغ حقل الإدخال بعد الحفظ
+            displayNames(); // تحديث الأسماء في اللعبة
+        }
 
-            if (title) {
-                gameTitleElement.innerText = title;
+        // عرض الأسماء في صفحة اللعبة
+        function displayNames() {
+            const namesContainer = document.getElementById("namesContainer");
+            namesContainer.innerHTML = remainingNames.map(name => `<div class="name">${name}</div>`).join('');
+        }
+
+        // بدء اللعبة واختيار اسم عشوائي
+        function startGame() {
+            document.querySelector('.header').style.display = 'none'; // إخفاء الأزرار
+            if (remainingNames.length === 0) {
+                alert("يرجى إضافة أسماء قبل البدء!");
+                return;
             }
-            if (names.length > 0) {
-                remainingNames = names;
-                localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
+            let timeRemaining = 10; // زمن العد التنازلي (بالثواني)
+            const timerElement = document.getElementById("timer");
+            timerElement.innerText = `الوقت المتبقي: ${timeRemaining} ثواني`;
+
+            const nameElements = document.querySelectorAll('.name');
+            nameElements.forEach(nameElement => {
+                nameElement.classList.add('shake'); // تأثير الاهتزاز
+            });
+
+            const countdownInterval = setInterval(() => {
+                timeRemaining--;
+                timerElement.innerText = `الوقت المتبقي: ${timeRemaining} ثواني`;
+
+                if (timeRemaining <= 0) {
+                    clearInterval(countdownInterval);
+                    const chosenName = chooseRandomName();
+                    highlightChosenName(chosenName); // تمييز الاسم المختار
+                    nameElements.forEach(nameElement => {
+                        nameElement.classList.remove('shake'); // إزالة تأثير الاهتزاز
+                    });
+                    timerElement.innerText = `تم اختيار الاسم: ${chosenName}`; // عرض الاسم المختار
+                    displayAvailableNumbers(); // عرض الأرقام المتاحة
+                    document.getElementById("amountInput").style.display = "block"; // إظهار حقل المبلغ
+                    document.getElementById("numbersInput").style.display = "block"; // إظهار حقل الأرقام
+                    document.getElementById("saveButton").style.display = "block"; // إظهار زر الحفظ
+                }
+            }, 1000);
+        }
+
+        // اختيار اسم عشوائي
+        function chooseRandomName() {
+            const randomIndex = Math.floor(Math.random() * remainingNames.length);
+            return remainingNames[randomIndex];
+        }
+
+        // تمييز الاسم المختار
+        function highlightChosenName(name) {
+            const nameElements = document.querySelectorAll('.name');
+            nameElements.forEach(element => {
+                if (element.innerText === name) {
+                    element.classList.add('highlight'); // إضافة تأثير اللون
+                }
+            });
+        }
+
+        // عرض الأرقام المتاحة
+        function displayAvailableNumbers() {
+            const availableNumbersContainer = document.getElementById("availableNumbersContainer");
+            availableNumbersContainer.innerHTML = ""; // تفريغ الحاوية
+            const numberCount = remainingNames.length; // عدد الأرقام يتناسب مع عدد الأسماء
+            for (let i = 1; i <= numberCount; i++) {
+                const numberDiv = document.createElement('div');
+                numberDiv.innerText = i;
+                numberDiv.classList.add('number');
+                numberDiv.onclick = function () {
+                    if (!this.classList.contains('disabled')) {
+                        this.classList.toggle('disabled'); // اختيار الرقم
+                    }
+                };
+                availableNumbersContainer.appendChild(numberDiv);
             }
-
-            showPage('gamePage'); // الانتقال إلى صفحة اللعبة
         }
 
-        // الحصول على لون عشوائي
-        function getRandomColor() {
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
+        // حفظ البيانات
+        function saveAndNext() {
+            const amount = document.getElementById("amount").value;
+            const chosenNameElement = document.querySelector('.highlight');
+            if (!chosenNameElement || amount <= 0) {
+                alert("يرجى اختيار اسم ومبلغ صالح!");
+                return;
             }
-            return color;
+            const chosenName = chosenNameElement.innerText;
+            const selectedNumbers = Array.from(document.querySelectorAll('.number.disabled')).map(num => num.innerText);
+            const newRow = `<tr>
+                <td>${chosenName}</td>
+                <td>${amount}</td>
+                <td>${selectedNumbers.join(', ')}</td>
+                <td><button class="delete-button" onclick="deleteRow(this)">حذف</button></td>
+            </tr>`;
+            document.getElementById("dataBody").insertAdjacentHTML('beforeend', newRow);
+            localStorage.setItem('savedData', JSON.stringify([...savedData, { name: chosenName, amount, numbers: selectedNumbers }]));
+            remainingNames = remainingNames.filter(name => name !== chosenName); // إزالة الاسم المحفوظ
+            localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // حفظ الأسماء المتبقية
+            displayNames(); // تحديث الأسماء في اللعبة
+            document.getElementById("amountInput").style.display = "none"; // إخفاء حقل المبلغ
+            document.getElementById("numbersInput").style.display = "none"; // إخفاء حقل الأرقام
+            document.getElementById("saveButton").style.display = "none"; // إخفاء زر الحفظ
+            document.getElementById("amount").value = ""; // إعادة تعيين حقل المبلغ
         }
 
-        // طباعة البيانات
-        function printData() {
-            let printContent = savedData.map(data => `${data.name} - ${data.amount}`).join('\n');
-            console.log(printContent);
-            alert(printContent);
+        // حذف صف البيانات
+        function deleteRow(button) {
+            const row = button.parentElement.parentElement;
+            const nameToDelete = row.cells[0].innerText;
+            remainingNames.push(nameToDelete); // إعادة الاسم المحذوف إلى القائمة
+            localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
+            row.remove(); // حذف الصف من الجدول
+            displayNames(); // تحديث الأسماء في اللعبة بعد الحذف
         }
 
-        // معالجة ضغط زر Enter
-        function checkEnter(event) {
-            if (event.key === 'Enter') {
-                saveAndNext();
-            }
+        // عرض البيانات المحفوظة
+        function displaySavedData() {
+            const dataBody = document.getElementById("dataBody");
+            dataBody.innerHTML = ""; // تفريغ الجدول
+            savedData.forEach(data => {
+                const row = `<tr>
+                    <td>${data.name}</td>
+                    <td>${data.amount}</td>
+                    <td>${data.numbers.join(', ')}</td>
+                    <td><button class="delete-button" onclick="deleteRow(this)">حذف</button></td>
+                </tr>`;
+                dataBody.insertAdjacentHTML('beforeend', row);
+            });
         }
 
-        window.onload = () => {
-            showPage('settingsPage');
-        }
+        // تحميل البيانات عند فتح الصفحة
+        document.addEventListener('DOMContentLoaded', function () {
+            showPage('settingsPage'); // عرض صفحة الإعدادات في البداية
+        });
     </script>
 </body>
 </html>
