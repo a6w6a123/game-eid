@@ -75,6 +75,13 @@
             padding: 5px;
             border-radius: 5px;
         }
+        #loader {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            display: none;
+            margin-top: 20px;
+        }
     </style>
     <!-- تحميل مكتبة Tagify -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.5/tagify.css">
@@ -90,6 +97,7 @@
     <div class="container" id="gamePage">
         <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
         <button onclick="startGame()">اختر اسم عشوائي</button>
+        <h2 id="loader">جاري اختيار الاسم...</h2>
         <h2 id="chosenName"></h2>
         <div id="amountInput" style="display: none;">
             <label for="amount">أدخل المبلغ:</label><br>
@@ -149,9 +157,9 @@
             document.getElementById("endPage").style.display = "none";
             document.getElementById(pageId).style.display = "block";
             if (pageId === 'settingsPage') {
-                displayAvailableNames(); // عرض الأسماء المتاحة في لوحة التحكم
-                updateTable(); // تحديث الجدول بالبيانات المحفوظة
-                updateTotalAmount(); // تحديث المبلغ الإجمالي
+                displayAvailableNames();
+                updateTable();
+                updateTotalAmount();
             }
         }
 
@@ -161,28 +169,37 @@
             namesList.innerHTML = remainingNames.map(name => `<div>${name}</div>`).join('');
         }
 
-        // البدء باللعبة واختيار اسم عشوائي
+        // البدء باللعبة واختيار اسم عشوائي مع تأثير التوتر
         function startGame() {
             document.querySelector('.header').style.display = 'none'; // إخفاء الأزرار
             if (remainingNames.length === 0) {
                 alert("يرجى ضبط الإعدادات وإضافة الأسماء");
                 return;
             }
-            pickRandomName();
+            document.getElementById("loader").style.display = "block";
+            document.getElementById("chosenName").innerText = "";
+            let counter = 0;
+
+            const intervalId = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * remainingNames.length);
+                document.getElementById("loader").innerText = "الاسم الحالي: " + remainingNames[randomIndex];
+                counter += 0.5;
+                if (counter >= 20) {
+                    clearInterval(intervalId);
+                    pickRandomName();
+                }
+            }, 500); // تغيير الاسم كل نصف ثانية
         }
 
+        // اختيار الاسم النهائي بعد انتهاء تأثير التوتر
         function pickRandomName() {
-            if (remainingNames.length === 0) {
-                endGame();
-                return;
-            }
-
+            document.getElementById("loader").style.display = "none";
             const randomIndex = Math.floor(Math.random() * remainingNames.length);
             const chosenName = remainingNames[randomIndex];
             document.getElementById("chosenName").innerText = "الاسم المختار هو: " + chosenName;
             document.getElementById("amountInput").style.display = "block";
-            remainingNames.splice(randomIndex, 1); 
-            localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // تحديث الأسماء المتبقية
+            remainingNames.splice(randomIndex, 1);
+            localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
         }
 
         // حفظ الاسم والمبلغ والانتقال إلى الاسم التالي
@@ -195,15 +212,14 @@
                 return;
             }
 
-            // حفظ البيانات المدخلة
             savedData.push({ name: chosenName, amount: parseFloat(amount) });
-            localStorage.setItem('savedData', JSON.stringify(savedData)); // حفظ البيانات في localStorage
+            localStorage.setItem('savedData', JSON.stringify(savedData));
 
             updateTable();
-            updateTotalAmount(); // تحديث المبلغ الإجمالي في لوحة التحكم
+            updateTotalAmount();
             document.getElementById("amount").value = "";
-            alert("تم حفظ البيانات بنجاح."); // تأكيد الحفظ
-            pickRandomName();
+            alert("تم حفظ البيانات بنجاح.");
+            startGame();
         }
 
         // التحقق من الضغط على Enter لحفظ البيانات
@@ -217,24 +233,22 @@
         function endGame() {
             document.getElementById("endTitle").innerText = endTitle;
             setTimeout(() => {
-                document.querySelector('.header').style.display = 'block'; // إظهار الأزرار بعد دقيقة
+                document.querySelector('.header').style.display = 'block';
             }, 60000);
             showPage('endPage');
         }
 
-        // حفظ الإعدادات وتحديث واجهة اللعبة
+        // حفظ الإعدادات وتحديث الأسماء المتاحة
         function saveSettings() {
+            endTitle = document.getElementById("endTitleInput").value || endTitle;
             const title = document.getElementById("titleInput").value;
-            const endTitleInput = document.getElementById("endTitleInput").value;
-            const tags = tagify.value;
+            const names = tagify.value.map(tag => tag.value);
 
-            if (title) gameTitleElement.innerText = title;
-            if (endTitleInput) endTitle = endTitleInput;
-            if (tags.length > 0) {
-                remainingNames = tags.map(tag => tag.value);
-                localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // حفظ الأسماء في localStorage
+            if (names.length > 0) {
+                remainingNames = names;
+                localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
                 alert("تم حفظ الإعدادات بنجاح.");
-                displayAvailableNames(); // تحديث الأسماء المتاحة
+                displayAvailableNames();
             } else {
                 alert("يرجى إدخال الأسماء.");
             }
@@ -243,7 +257,7 @@
         // حذف المدخل من البيانات المحفوظة وتحديث العرض
         function deleteEntry(index) {
             savedData.splice(index, 1);
-            localStorage.setItem('savedData', JSON.stringify(savedData)); // تحديث البيانات في localStorage
+            localStorage.setItem('savedData', JSON.stringify(savedData));
             updateTable();
             updateTotalAmount();
         }
@@ -268,7 +282,7 @@
             document.getElementById("totalAmount").innerText = "المبلغ الإجمالي: " + total + " ريال";
         }
 
-        // دالة لطباعة البيانات كجدول
+        // طباعة البيانات كجدول
         function printData() {
             const title = document.getElementById("titleInput").value || "إعدادات اللعبة";
             let printContent = `<h1>${title}</h1><table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="border: 1px solid #ddd; padding: 8px;">الاسم</th><th style="border: 1px solid #ddd; padding: 8px;">المبلغ</th></tr></thead><tbody>`;
@@ -282,7 +296,6 @@
             printWindow.print();
         }
 
-        // إظهار لوحة التحكم كصفحة افتراضية
         showPage('settingsPage');
     </script>
 
