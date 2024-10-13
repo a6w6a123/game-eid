@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لعبة اختيار اسم عشوائي</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.2.0/tagify.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +14,7 @@
             margin: 0;
         }
         .container {
-            max-width: 500px;
+            max-width: 600px;
             margin: auto;
             padding: 20px;
             background-color: #ffffff;
@@ -41,78 +42,80 @@
         button:hover {
             background-color: #45a049;
         }
-        .names-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        .card {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            margin: 10px;
+            background-color: #FFA500;
+            color: white;
+            font-size: 24px;
+            border-radius: 10px;
+            line-height: 80px;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .chosen-name {
             margin-top: 20px;
+            font-size: 30px;
+            color: #FF0000;
         }
-        .name {
-            margin: 5px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: 80%;
-            transition: background-color 0.3s;
-            cursor: pointer;
-        }
-        .number {
-            margin: 5px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: 80%;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .disabled {
-            background-color: #f44336; /* لون للشطب */
-            color: white;
-            text-decoration: line-through;
-        }
-        .highlight {
-            background-color: #ffd700; /* لون للتأثير عند اختيار الاسم */
-        }
-        .flash {
-            background-color: red; /* اللون الأحمر لتأثير الاختيار */
-            color: white;
-            animation: flash 0.5s infinite alternate; /* إضافة تأثير الوميض */
-        }
-        .shake {
-            animation: shake 0.5s; /* تأثير الاهتزاز */
-        }
-        @keyframes shake {
-            0% { transform: translate(1px, 0); }
-            25% { transform: translate(-1px, 0); }
-            50% { transform: translate(1px, 0); }
-            75% { transform: translate(-1px, 0); }
-            100% { transform: translate(0, 0); }
-        }
-        table {
+        #resultsTable, #namesTable {
+            margin-top: 20px;
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
         }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
+        #resultsTable th, #resultsTable td, #namesTable th, #namesTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
             text-align: center;
         }
-        .delete-button {
-            background-color: #f44336;
-            border: none;
+        #resultsTable th, #namesTable th {
+            background-color: #4caf50;
             color: white;
-            padding: 5px 10px;
-            cursor: pointer;
-            border-radius: 5px;
         }
-        .tag {
+        #numberInputContainer {
+            display: none;
+            margin-top: 20px;
+        }
+        .number-card {
             display: inline-block;
-            background-color: #e0e0e0;
-            border-radius: 3px;
-            padding: 5px;
-            margin: 5px;
-            cursor: default;
+            width: 60px;
+            height: 60px;
+            margin: 10px;
+            background-color: #4caf50;
+            color: white;
+            font-size: 20px;
+            border-radius: 10px;
+            line-height: 60px;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .number-card:hover {
+            transform: scale(1.1);
+        }
+        .selected-number {
+            background-color: #FF0000; /* لون الرقم المحدد */
+        }
+        .countdown {
+            font-size: 48px;
+            color: #FF0000;
+            margin-top: 20px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50%, 100% {
+                opacity: 1;
+            }
+            25%, 75% {
+                opacity: 0.5;
+            }
         }
     </style>
 </head>
@@ -121,150 +124,108 @@
     <div class="header">
         <button onclick="showPage('gamePage')">اللعبة</button>
         <button onclick="showPage('settingsPage')">لوحة التحكم</button>
+        <button onclick="showPage('endPage')">صفحة النهاية</button>
     </div>
 
     <!-- صفحة اللعبة -->
     <div class="container" id="gamePage">
         <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
-        <button onclick="startGame()">ابدأ اللعبة</button>
-        <h2 id="timer"></h2>
-        <div class="names-container" id="namesContainer"></div>
-        
-        <div id="amountInput" style="display: none;">
-            <label for="amount">أدخل المبلغ:</label><br>
-            <input type="number" id="amount" placeholder="أدخل المبلغ"><br>
+        <div id="nameListDisplay"></div>
+        <h2 class="chosen-name" id="chosenName"></h2>
+        <div id="numberInputContainer">
+            <h2>اختر رقمًا:</h2>
+            <div id="numberCardsContainer"></div>
+            <input type="number" id="amountInput" placeholder="أدخل المبلغ">
+            <button id="submitButton" onclick="submitChoice()">إرسال</button>
         </div>
-
-        <div id="numbersInput" style="display: none;">
-            <label for="numbers">اختر الأرقام المتاحة:</label><br>
-            <div id="availableNumbersContainer"></div>
-        </div>
-
-        <button onclick="saveAndNext()" style="display: none;" id="saveButton">حفظ</button>
+        <button onclick="startCountdown()">بدء</button>
     </div>
 
     <!-- لوحة التحكم -->
     <div class="container" id="settingsPage">
         <h1>إعدادات اللعبة</h1>
-        <label for="titleInput">العنوان:</label>
-        <input type="text" id="titleInput" placeholder="أدخل عنوان اللعبة"><br>
-        
         <label for="namesInput">الأسماء:</label>
-        <div id="tagsContainer" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; width: 80%; margin: 10px auto;">
-            <input type="text" id="nameInput" placeholder="أدخل الأسماء كـ تاغات" onkeydown="addTag(event)">
-        </div>
-        <div id="tagsDisplay"></div>
-        
-        <button onclick="saveSettings()">حفظ الإعدادات</button>
+        <input type="text" id="namesInput" placeholder="أدخل الأسماء (افصلها بـ ,)" onkeydown="if(event.key === 'Enter'){ addName(); }"><br>
+        <button onclick="addName()">إضافة الأسماء</button>
 
-        <h2>البيانات المحفوظة</h2>
-        <table id="dataTable">
+        <h2>الأسماء المدخلة</h2>
+        <table id="namesTable">
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody id="namesTableBody"></tbody>
+        </table>
+
+        <h2>نتائج اللعبة</h2>
+        <table id="resultsTable">
             <thead>
                 <tr>
                     <th>الاسم</th>
                     <th>المبلغ</th>
-                    <th>الرقم</th>
-                    <th>حذف</th>
+                    <th>إجراءات</th>
                 </tr>
             </thead>
-            <tbody id="dataBody"></tbody>
+            <tbody id="resultsTableBody"></tbody>
         </table>
+        <button onclick="printResults()">طباعة النتائج</button>
     </div>
 
+    <!-- صفحة النهاية -->
+    <div class="container" id="endPage">
+        <h1>انتهت الأسماء!</h1>
+        <h2 id="finalMessage"></h2>
+    </div>
+
+    <audio id="countdownSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+
     <script>
-        const gameTitleElement = document.getElementById("gameTitle");
-        const nameInput = document.getElementById("nameInput");
-        const tagsDisplay = document.getElementById("tagsDisplay");
         let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
-        let savedData = JSON.parse(localStorage.getItem('savedData')) || [];
+        const savedData = JSON.parse(localStorage.getItem('savedData')) || [];
+        let countdownInterval;
 
         // عرض الصفحة المحددة
         function showPage(pageId) {
             document.getElementById("gamePage").style.display = "none";
             document.getElementById("settingsPage").style.display = "none";
+            document.getElementById("endPage").style.display = "none";
             document.getElementById(pageId).style.display = "block";
-            if (pageId === 'settingsPage') {
-                displaySavedData(); // عرض البيانات المحفوظة في الجدول
-            } else if (pageId === 'gamePage') {
-                displayNames(); // عرض الأسماء في اللعبة
+
+            if (pageId === 'gamePage') {
+                updateNameListDisplay();
+            } else if (pageId === 'settingsPage') {
+                updateNamesTable();
+                updateResultsTable();
+            } else if (pageId === 'endPage') {
+                document.getElementById("finalMessage").innerText = localStorage.getItem('endMessage') || "لا توجد رسالة.";
             }
         }
 
-        // إضافة تاغ عند إدخال الاسم
-        function addTag(event) {
-            if (event.key === "Enter" && nameInput.value.trim() !== "") {
-                const tag = nameInput.value.trim();
-                if (!remainingNames.includes(tag)) { // تحقق من عدم وجود الاسم بالفعل
-                    remainingNames.push(tag);
-                    const tagElement = document.createElement('span');
-                    tagElement.className = 'tag';
-                    tagElement.innerText = tag;
-
-                    // زر الحذف
-                    const deleteButton = document.createElement('button');
-                    deleteButton.innerText = "حذف";
-                    deleteButton.className = "delete-button";
-                    deleteButton.onclick = function() {
-                        tagElement.remove(); // حذف التاغ عند النقر عليه
-                        remainingNames = remainingNames.filter(name => name !== tag);
-                        localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // حفظ الأسماء المحدثة
-                        displayNames(); // تحديث الأسماء في اللعبة
-                    };
-
-                    tagElement.appendChild(deleteButton); // إضافة زر الحذف إلى التاغ
-                    tagsDisplay.appendChild(tagElement);
-                    nameInput.value = ""; // تفريغ حقل الإدخال
-                    displayNames(); // تحديث الأسماء في اللعبة
-                }
-            }
-        }
-
-        // حفظ الإعدادات
-        function saveSettings() {
-            localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
-            alert("تم حفظ الإعدادات!");
-            nameInput.value = ''; // تفريغ حقل الإدخال بعد الحفظ
-            displayNames(); // تحديث الأسماء في اللعبة
-        }
-
-        // عرض الأسماء في صفحة اللعبة
-        function displayNames() {
-            const namesContainer = document.getElementById("namesContainer");
-            namesContainer.innerHTML = remainingNames.map(name => `<div class="name">${name}</div>`).join('');
-        }
-
-        // بدء اللعبة واختيار اسم عشوائي
-        function startGame() {
-            document.querySelector('.header').style.display = 'none'; // إخفاء الأزرار
-            if (remainingNames.length === 0) {
-                alert("يرجى إضافة أسماء قبل البدء!");
-                return;
-            }
-            let timeRemaining = 10; // زمن العد التنازلي (بالثواني)
-            const timerElement = document.getElementById("timer");
-            timerElement.innerText = `الوقت المتبقي: ${timeRemaining} ثواني`;
-
-            const nameElements = document.querySelectorAll('.name');
-            nameElements.forEach(nameElement => {
-                nameElement.classList.add('shake'); // تأثير الاهتزاز
+        // بدء العد التنازلي
+        function startCountdown() {
+            const nameListDisplay = document.getElementById("nameListDisplay");
+            nameListDisplay.innerHTML = ''; // مسح الأسماء السابقة
+            remainingNames.forEach(name => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerText = name;
+                nameListDisplay.appendChild(card);
             });
 
-            const countdownInterval = setInterval(() => {
-                timeRemaining--;
-                timerElement.innerText = `الوقت المتبقي: ${timeRemaining} ثواني`;
+            let countdown = 10; // 10 ثوانٍ
+            const countdownDisplay = document.createElement("h2");
+            countdownDisplay.className = "countdown"; // إضافة فئة العد التنازلي
+            countdownDisplay.innerText = countdown;
+            nameListDisplay.appendChild(countdownDisplay);
 
-                if (timeRemaining <= 0) {
+            countdownInterval = setInterval(() => {
+                countdown--;
+                countdownDisplay.innerText = countdown;
+                if (countdown <= 0) {
                     clearInterval(countdownInterval);
-                    const chosenName = chooseRandomName();
-                    highlightChosenName(chosenName); // تمييز الاسم المختار
-                    nameElements.forEach(nameElement => {
-                        nameElement.classList.remove('shake'); // إزالة تأثير الاهتزاز
-                    });
-                    timerElement.innerText = `تم اختيار الاسم: ${chosenName}`; // عرض الاسم المختار
-                    displayAvailableNumbers(); // عرض الأرقام المتاحة
-                    document.getElementById("amountInput").style.display = "block"; // إظهار حقل المبلغ
-                    document.getElementById("numbersInput").style.display = "block"; // إظهار حقل الأرقام
-                    document.getElementById("saveButton").style.display = "block"; // إظهار زر الحفظ
+                    chooseRandomName();
                 }
             }, 1000);
         }
@@ -272,93 +233,153 @@
         // اختيار اسم عشوائي
         function chooseRandomName() {
             const randomIndex = Math.floor(Math.random() * remainingNames.length);
-            return remainingNames[randomIndex];
+            const chosenName = remainingNames[randomIndex];
+            document.getElementById("chosenName").innerText = `اخترت: ${chosenName}`;
+            document.getElementById("numberInputContainer").style.display = "block"; // عرض حقل الأرقام
+            createNumberCards(); // إنشاء بطاقات الأرقام
+            document.getElementById("countdownSound").play(); // تشغيل الصوت عند الانتهاء
         }
 
-        // تمييز الاسم المختار
-        function highlightChosenName(name) {
-            const nameElements = document.querySelectorAll('.name');
-            nameElements.forEach(element => {
-                if (element.innerText === name) {
-                    element.classList.add('highlight'); // إضافة تأثير اللون
-                }
+        // إنشاء بطاقات الأرقام بناءً على عدد الأسماء
+        function createNumberCards() {
+            const numberCardsContainer = document.getElementById("numberCardsContainer");
+            numberCardsContainer.innerHTML = ''; // مسح المحتويات السابقة
+            const numbers = Array.from({ length: remainingNames.length }, (_, i) => i + 1); // إنشاء الأرقام من 1 إلى عدد الأسماء
+            numbers.forEach(num => {
+                const numberCard = document.createElement("div");
+                numberCard.className = "number-card";
+                numberCard.innerText = num;
+                numberCard.onclick = () => selectNumber(num, numberCard); // ربط الوظيفة
+                numberCardsContainer.appendChild(numberCard);
             });
         }
 
-        // عرض الأرقام المتاحة
-        function displayAvailableNumbers() {
-            const availableNumbersContainer = document.getElementById("availableNumbersContainer");
-            availableNumbersContainer.innerHTML = ""; // تفريغ الحاوية
-            const numberCount = remainingNames.length; // عدد الأرقام يتناسب مع عدد الأسماء
-            for (let i = 1; i <= numberCount; i++) {
-                const numberDiv = document.createElement('div');
-                numberDiv.innerText = i;
-                numberDiv.classList.add('number');
-                numberDiv.onclick = function () {
-                    if (!this.classList.contains('disabled')) {
-                        this.classList.toggle('disabled'); // اختيار الرقم
-                    }
-                };
-                availableNumbersContainer.appendChild(numberDiv);
+        // اختيار رقم وتغيير لونه
+        function selectNumber(num, numberCard) {
+            document.getElementById("numberInputContainer").dataset.selectedNumber = num; // حفظ الرقم المحدد
+            const amountInput = document.getElementById("amountInput");
+            amountInput.focus(); // التركيز على حقل المبلغ
+
+            // تغيير لون الرقم المحدد
+            document.querySelectorAll(".number-card").forEach(card => {
+                card.classList.remove("selected-number"); // إزالة اللون عن جميع الأرقام
+            });
+            numberCard.classList.add("selected-number"); // إضافة اللون للرقم المحدد
+        }
+
+        // إرسال الاختيار
+        function submitChoice() {
+            const chosenName = document.getElementById("chosenName").innerText.replace("اخترت: ", "");
+            const amount = document.getElementById("amountInput").value;
+            const selectedNumber = document.getElementById("numberInputContainer").dataset.selectedNumber;
+
+            if (chosenName && amount && selectedNumber) {
+                const result = { name: chosenName, amount: amount, number: selectedNumber };
+                savedData.push(result);
+                localStorage.setItem('savedData', JSON.stringify(savedData));
+                updateResultsTable();
+                removeChosenName(chosenName);
+                resetGame();
+            } else {
+                alert("يرجى التأكد من اختيار اسم ورقم ومبلغ!");
             }
         }
 
-        // حفظ البيانات
-        function saveAndNext() {
-            const amount = document.getElementById("amount").value;
-            const chosenNameElement = document.querySelector('.highlight');
-            if (!chosenNameElement || amount <= 0) {
-                alert("يرجى اختيار اسم ومبلغ صالح!");
-                return;
-            }
-            const chosenName = chosenNameElement.innerText;
-            const selectedNumbers = Array.from(document.querySelectorAll('.number.disabled')).map(num => num.innerText);
-            const newRow = `<tr>
-                <td>${chosenName}</td>
-                <td>${amount}</td>
-                <td>${selectedNumbers.join(', ')}</td>
-                <td><button class="delete-button" onclick="deleteRow(this)">حذف</button></td>
-            </tr>`;
-            document.getElementById("dataBody").insertAdjacentHTML('beforeend', newRow);
-            localStorage.setItem('savedData', JSON.stringify([...savedData, { name: chosenName, amount, numbers: selectedNumbers }]));
-            remainingNames = remainingNames.filter(name => name !== chosenName); // إزالة الاسم المحفوظ
-            localStorage.setItem('remainingNames', JSON.stringify(remainingNames)); // حفظ الأسماء المتبقية
-            displayNames(); // تحديث الأسماء في اللعبة
-            document.getElementById("amountInput").style.display = "none"; // إخفاء حقل المبلغ
-            document.getElementById("numbersInput").style.display = "none"; // إخفاء حقل الأرقام
-            document.getElementById("saveButton").style.display = "none"; // إخفاء زر الحفظ
-            document.getElementById("amount").value = ""; // إعادة تعيين حقل المبلغ
-        }
-
-        // حذف صف البيانات
-        function deleteRow(button) {
-            const row = button.parentElement.parentElement;
-            const nameToDelete = row.cells[0].innerText;
-            remainingNames.push(nameToDelete); // إعادة الاسم المحذوف إلى القائمة
+        // إزالة الاسم المختار
+        function removeChosenName(name) {
+            remainingNames = remainingNames.filter(n => n !== name);
             localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
-            row.remove(); // حذف الصف من الجدول
-            displayNames(); // تحديث الأسماء في اللعبة بعد الحذف
+            updateNameListDisplay();
+
+            // إذا لم يتبق أي أسماء، عرض صفحة النهاية
+            if (remainingNames.length === 0) {
+                showPage('endPage');
+            }
         }
 
-        // عرض البيانات المحفوظة
-        function displaySavedData() {
-            const dataBody = document.getElementById("dataBody");
-            dataBody.innerHTML = ""; // تفريغ الجدول
-            savedData.forEach(data => {
-                const row = `<tr>
-                    <td>${data.name}</td>
-                    <td>${data.amount}</td>
-                    <td>${data.numbers.join(', ')}</td>
-                    <td><button class="delete-button" onclick="deleteRow(this)">حذف</button></td>
-                </tr>`;
-                dataBody.insertAdjacentHTML('beforeend', row);
+        // تحديث عرض الأسماء
+        function updateNameListDisplay() {
+            const nameListDisplay = document.getElementById("nameListDisplay");
+            nameListDisplay.innerHTML = ''; // مسح الأسماء السابقة
+            remainingNames.forEach(name => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerText = name;
+                nameListDisplay.appendChild(card);
             });
         }
 
-        // تحميل البيانات عند فتح الصفحة
-        document.addEventListener('DOMContentLoaded', function () {
-            showPage('settingsPage'); // عرض صفحة الإعدادات في البداية
-        });
+        // إعادة تعيين اللعبة
+        function resetGame() {
+            document.getElementById("chosenName").innerText = '';
+            document.getElementById("amountInput").value = '';
+            document.getElementById("numberInputContainer").style.display = "none";
+            clearInterval(countdownInterval);
+            document.querySelector(".countdown").innerText = '';
+        }
+
+        // تحديث جدول النتائج
+        function updateResultsTable() {
+            const resultsTableBody = document.getElementById("resultsTableBody");
+            resultsTableBody.innerHTML = ''; // مسح النتائج السابقة
+            savedData.forEach(result => {
+                const row = document.createElement("tr");
+                row.innerHTML = `<td>${result.name}</td><td>${result.amount}</td><td><button onclick="removeResult('${result.name}')">حذف</button></td>`;
+                resultsTableBody.appendChild(row);
+            });
+        }
+
+        // حذف نتيجة
+        function removeResult(name) {
+            const index = savedData.findIndex(r => r.name === name);
+            if (index !== -1) {
+                savedData.splice(index, 1);
+                localStorage.setItem('savedData', JSON.stringify(savedData));
+                updateResultsTable();
+            }
+        }
+
+        // تحديث جدول الأسماء
+        function updateNamesTable() {
+            const namesTableBody = document.getElementById("namesTableBody");
+            namesTableBody.innerHTML = ''; // مسح الأسماء السابقة
+            remainingNames.forEach(name => {
+                const row = document.createElement("tr");
+                row.innerHTML = `<td>${name}</td><td><button onclick="removeName('${name}')">حذف</button></td>`;
+                namesTableBody.appendChild(row);
+            });
+        }
+
+        // إزالة اسم
+        function removeName(name) {
+            remainingNames = remainingNames.filter(n => n !== name);
+            localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
+            updateNamesTable();
+            updateNameListDisplay();
+        }
+
+        // إضافة اسم
+        function addName() {
+            const namesInput = document.getElementById("namesInput").value;
+            const names = namesInput.split(',').map(name => name.trim()).filter(name => name);
+            remainingNames.push(...names);
+            localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
+            document.getElementById("namesInput").value = ''; // مسح حقل الإدخال
+            updateNamesTable();
+        }
+
+        // طباعة النتائج
+        function printResults() {
+            const results = savedData.map(result => `${result.name}: ${result.amount}`).join('\n');
+            alert(`النتائج:\n${results}`);
+        }
+
+        // تحميل البيانات المخزنة عند بدء التطبيق
+        window.onload = () => {
+            showPage('settingsPage');
+            updateNamesTable();
+            updateResultsTable();
+        };
     </script>
 </body>
 </html>
