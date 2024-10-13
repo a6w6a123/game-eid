@@ -62,7 +62,7 @@
             color: #000;
             margin-top: 20px;
         }
-        input[type="number"] {
+        input[type="number"], input[type="datetime-local"] {
             margin-top: 10px;
             padding: 10px;
             font-size: 16px;
@@ -86,6 +86,11 @@
 <body>
 
     <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
+    <div>
+        <label for="startDatetime">اختر تاريخ ووقت بدء اللعبة:</label>
+        <input type="datetime-local" id="startDatetime">
+        <button onclick="setGameStartTime()">تعيين</button>
+    </div>
     <div class="names-container" id="namesContainer"></div>
     <div class="countdown" id="countdown"></div>
     <div id="numberInputContainer">
@@ -103,6 +108,44 @@
         let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
         const gameTitle = localStorage.getItem('gameTitle') || "لعبة اختيار اسم عشوائي";
         document.getElementById("gameTitle").innerText = gameTitle;
+
+        let countdownInterval;
+        let gameStartTime = null;
+
+        // تعيين وقت بدء اللعبة
+        function setGameStartTime() {
+            const datetimeInput = document.getElementById("startDatetime").value;
+            if (datetimeInput) {
+                const selectedDate = new Date(datetimeInput);
+                const currentDate = new Date();
+
+                if (selectedDate > currentDate) {
+                    gameStartTime = selectedDate;
+                    startCountdown(selectedDate);
+                } else {
+                    alert("التاريخ والوقت المحددين يجب أن يكونا في المستقبل!");
+                }
+            }
+        }
+
+        // بدء العد التنازلي
+        function startCountdown(selectedDate) {
+            const countdownDisplay = document.getElementById("countdown");
+            countdownDisplay.innerText = "";
+
+            countdownInterval = setInterval(() => {
+                const currentTime = new Date();
+                const timeDiff = selectedDate - currentTime;
+
+                if (timeDiff <= 0) {
+                    clearInterval(countdownInterval);
+                    startGame(); // بدء اللعبة عندما ينتهي العد التنازلي
+                } else {
+                    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+                    countdownDisplay.innerText = `الوقت المتبقي: ${seconds} ثواني`;
+                }
+            }, 1000);
+        }
 
         // عرض الأسماء
         function displayNames() {
@@ -191,7 +234,7 @@
 
         // إنشاء رابط المشاهدة
         function generateViewLink() {
-            const link = window.location.origin + '/view.html'; // رابط صفحة المشاهدة
+            const link = window.location.origin + '/ve.html'; // رابط صفحة المشاهدة
             document.getElementById("viewLinkContainer").innerHTML = `<p>رابط المشاهدة: <a href="${link}" target="_blank">${link}</a></p>`;
         }
 
