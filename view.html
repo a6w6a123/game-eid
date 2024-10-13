@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض اللعبة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .chosen-name {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #FF0000;
+        }
+        .saved-data {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>عرض اللعبة</h1>
+    <h2 class="chosen-name" id="chosenName"></h2>
+    <div class="saved-data" id="savedDataContainer"></div>
+
+    <script>
+        window.onload = function() {
+            const savedResults = JSON.parse(localStorage.getItem('savedData')) || [];
+            const chosenName = savedResults.length > 0 ? savedResults[savedResults.length - 1].name : "لا توجد أسماء مختارة";
+            document.getElementById("chosenName").innerText = chosenName;
+
+            const savedDataContainer = document.getElementById("savedDataContainer");
+            savedResults.forEach(result => {
+                const resultDiv = document.createElement('div');
+                resultDiv.innerText = `الاسم: ${result.name}, الرقم: ${result.number}, المبلغ: ${result.amount}`;
+                savedDataContainer.appendChild(resultDiv);
+            });
+        };
+    </script>
+</body>
+</html>
