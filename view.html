@@ -15,33 +15,89 @@
         h1 {
             color: #333;
         }
-        .chosen-name {
+        .result-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             margin-top: 20px;
-            font-size: 24px;
-            color: #FF0000;
         }
-        .saved-data {
+        .result-card {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 120px;
+            height: 120px;
+            margin: 10px;
+            background-color: #FFA500;
+            color: white;
+            font-size: 18px;
+            border-radius: 10px;
+            transition: transform 0.2s;
+            flex-direction: column;
+        }
+        .result-card:hover {
+            transform: scale(1.05);
+        }
+        .message {
+            font-size: 20px;
+            color: #FF0000;
             margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>عرض اللعبة</h1>
-    <h2 class="chosen-name" id="chosenName"></h2>
-    <div class="saved-data" id="savedDataContainer"></div>
+
+    <h1 id="gameTitle">عرض اللعبة</h1>
+    <div class="result-container" id="resultContainer"></div>
+    <div class="message" id="message"></div>
 
     <script>
-        window.onload = function() {
-            const savedResults = JSON.parse(localStorage.getItem('savedData')) || [];
-            const chosenName = savedResults.length > 0 ? savedResults[savedResults.length - 1].name : "لا توجد أسماء مختارة";
-            document.getElementById("chosenName").innerText = chosenName;
+        const gameStartDate = localStorage.getItem('gameStartDate'); // الحصول على تاريخ بدء اللعبة
+        const gameTitle = localStorage.getItem('gameTitle') || "لعبة اختيار اسم عشوائي";
+        document.getElementById("gameTitle").innerText = gameTitle;
 
-            const savedDataContainer = document.getElementById("savedDataContainer");
-            savedResults.forEach(result => {
-                const resultDiv = document.createElement('div');
-                resultDiv.innerText = `الاسم: ${result.name}, الرقم: ${result.number}, المبلغ: ${result.amount}`;
-                savedDataContainer.appendChild(resultDiv);
-            });
+        // التحقق من تاريخ بدء اللعبة
+        function checkGameStartTime() {
+            const currentTime = new Date();
+            const startTime = new Date(gameStartDate);
+            
+            if (currentTime < startTime) {
+                document.getElementById("message").innerText = `ستبدأ اللعبة في ${startTime.toLocaleString()}...`;
+                setTimeout(() => {
+                    alert(`ستبدأ اللعبة في ${startTime.toLocaleString()}...`);
+                }, 1000); // تأخير ظهور التنبيه
+                return false; // اللعبة لم تبدأ بعد
+            }
+            return true; // اللعبة بدأت
+        }
+
+        // عرض النتائج
+        function displayResults() {
+            const savedData = JSON.parse(localStorage.getItem('savedData')) || [];
+            const resultContainer = document.getElementById("resultContainer");
+            resultContainer.innerHTML = ''; // مسح المحتوى السابق
+            
+            if (savedData.length > 0) {
+                savedData.forEach(result => {
+                    const resultCard = document.createElement('div');
+                    resultCard.className = 'result-card';
+                    resultCard.innerHTML = `
+                        <div>${result.name}</div>
+                        <div>رقم: ${result.number}</div>
+                        <div>مبلغ: ${result.amount}</div>
+                    `;
+                    resultContainer.appendChild(resultCard);
+                });
+            } else {
+                resultContainer.innerHTML = '<p>لا توجد بيانات للعرض.</p>';
+            }
+        }
+
+        // عند تحميل الصفحة
+        window.onload = function() {
+            if (checkGameStartTime()) {
+                displayResults(); // عرض النتائج إذا كانت اللعبة قد بدأت
+            }
         };
     </script>
 </body>
