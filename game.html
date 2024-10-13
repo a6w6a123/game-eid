@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة اختيار اسم عشوائي</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+            background-color: #f0f8ff;
+        }
+        h1 {
+            color: #333;
+        }
+        .card {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            margin: 10px;
+            background-color: #FFA500;
+            color: white;
+            font-size: 20px;
+            border-radius: 10px;
+            line-height: 60px;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.1);
+        }
+        .chosen-name {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #FF0000;
+        }
+        #numberInputContainer {
+            display: none;
+            margin-top: 20px;
+        }
+        .number-card {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            margin: 10px;
+            background-color: #4caf50;
+            color: white;
+            font-size: 20px;
+            border-radius: 10px;
+            line-height: 60px;
+            cursor: pointer;
+            position: relative;
+        }
+        .selected-number {
+            background-color: #FF5733; /* تغيير اللون عند التحديد */
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
+    <div id="namesContainer"></div>
+    <div id="numberInputContainer">
+        <h2>اختر رقم</h2>
+        <div id="numbersContainer"></div>
+    </div>
+    <h2 class="chosen-name" id="chosenName"></h2>
+    <button id="startButton" onclick="startGame()">ابدأ اللعبة</button>
+
+    <script>
+        let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
+        const gameTitle = localStorage.getItem('gameTitle') || "لعبة اختيار اسم عشوائي";
+        document.getElementById("gameTitle").innerText = gameTitle;
+
+        // بدء اللعبة
+        function startGame() {
+            if (remainingNames.length > 0) {
+                const chosenIndex = Math.floor(Math.random() * remainingNames.length);
+                const chosenName = remainingNames[chosenIndex];
+                document.getElementById("chosenName").innerText = chosenName;
+                remainingNames.splice(chosenIndex, 1);
+                document.getElementById("numberInputContainer").style.display = "block";
+                generateNumberCards();
+            }
+        }
+
+        // توليد بطاقات الأرقام
+        function generateNumberCards() {
+            const numbersContainer = document.getElementById("numbersContainer");
+            numbersContainer.innerHTML = ''; // مسح المحتوى السابق
+            const numberCount = Math.min(remainingNames.length, 10); // تحديد الحد الأقصى للأرقام
+            for (let i = 1; i <= numberCount; i++) {
+                const numberCard = document.createElement('div');
+                numberCard.className = 'number-card';
+                numberCard.innerText = i;
+                numberCard.onclick = () => selectNumber(i);
+                numbersContainer.appendChild(numberCard);
+            }
+        }
+
+        // اختيار رقم
+        function selectNumber(selectedNumber) {
+            const numberCards = document.querySelectorAll('.number-card');
+            numberCards.forEach(card => {
+                card.classList.remove('selected-number');
+            });
+            const card = Array.from(numberCards).find(card => card.innerText == selectedNumber);
+            if (card) {
+                card.classList.add('selected-number');
+                saveResult(selectedNumber);
+            }
+        }
+
+        // حفظ النتيجة
+        function saveResult(selectedNumber) {
+            const chosenName = document.getElementById("chosenName").innerText;
+            const savedResults = JSON.parse(localStorage.getItem('savedData')) || [];
+            savedResults.push({ name: chosenName, number: selectedNumber });
+            localStorage.setItem('savedData', JSON.stringify(savedResults));
+        }
+    </script>
+</body>
+</html>
