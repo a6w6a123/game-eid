@@ -10,26 +10,39 @@
             text-align: center;
             direction: rtl;
             background-color: #f0f8ff;
+            padding: 20px;
         }
         h1 {
             color: #333;
         }
-        .card {
-            display: inline-block;
-            width: 60px;
-            height: 60px;
+        .names-container, .numbers-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .card, .number-card {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 80px;
+            height: 80px;
             margin: 10px;
             background-color: #FFA500;
             color: white;
             font-size: 20px;
             border-radius: 10px;
-            line-height: 60px;
             cursor: pointer;
-            position: relative;
-            transition: transform 0.2s;
+            transition: background-color 0.2s, transform 0.2s;
         }
-        .card:hover {
+        .card:hover, .number-card:hover {
             transform: scale(1.1);
+        }
+        .number-card {
+            background-color: #4caf50;
+        }
+        .selected-number {
+            background-color: #FF5733; /* تغيير اللون عند التحديد */
         }
         .chosen-name {
             margin-top: 20px;
@@ -40,22 +53,6 @@
             display: none;
             margin-top: 20px;
         }
-        .number-card {
-            display: inline-block;
-            width: 60px;
-            height: 60px;
-            margin: 10px;
-            background-color: #4caf50;
-            color: white;
-            font-size: 20px;
-            border-radius: 10px;
-            line-height: 60px;
-            cursor: pointer;
-            position: relative;
-        }
-        .selected-number {
-            background-color: #FF5733; /* تغيير اللون عند التحديد */
-        }
         .crossed-out {
             text-decoration: line-through;
             color: gray;
@@ -65,16 +62,35 @@
             color: #000;
             margin-top: 20px;
         }
+        input[type="number"] {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
 
     <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
-    <div id="namesContainer"></div>
+    <div class="names-container" id="namesContainer"></div>
     <div class="countdown" id="countdown"></div>
     <div id="numberInputContainer">
         <h2>اختر رقم</h2>
-        <div id="numbersContainer"></div>
+        <div class="numbers-container" id="numbersContainer"></div>
         <input type="number" id="amountInput" placeholder="أدخل المبلغ">
         <button id="saveButton" onclick="saveResult()">حفظ</button>
     </div>
@@ -86,9 +102,22 @@
         const gameTitle = localStorage.getItem('gameTitle') || "لعبة اختيار اسم عشوائي";
         document.getElementById("gameTitle").innerText = gameTitle;
 
+        // عرض الأسماء
+        function displayNames() {
+            const namesContainer = document.getElementById("namesContainer");
+            namesContainer.innerHTML = ''; // مسح المحتوى السابق
+            remainingNames.forEach(name => {
+                const nameCard = document.createElement('div');
+                nameCard.className = 'card';
+                nameCard.innerText = name;
+                namesContainer.appendChild(nameCard);
+            });
+        }
+
         // بدء اللعبة
         function startGame() {
             if (remainingNames.length > 0) {
+                displayNames();
                 // بدء العد التنازلي
                 let countdownTime = 10;
                 document.getElementById("countdown").innerText = countdownTime;
@@ -98,12 +127,13 @@
 
                     if (countdownTime <= 0) {
                         clearInterval(countdownInterval);
+                        // اختيار اسم عشوائي بعد انتهاء العد التنازلي
                         const chosenIndex = Math.floor(Math.random() * remainingNames.length);
                         const chosenName = remainingNames[chosenIndex];
                         document.getElementById("chosenName").innerText = chosenName;
-                        remainingNames.splice(chosenIndex, 1);
-                        document.getElementById("numberInputContainer").style.display = "block";
-                        generateNumberCards();
+                        remainingNames.splice(chosenIndex, 1); // حذف الاسم المختار من القائمة
+                        document.getElementById("numberInputContainer").style.display = "block"; // عرض حقل الأرقام
+                        generateNumberCards(); // توليد بطاقات الأرقام
                     }
                 }, 1000);
             }
@@ -113,7 +143,7 @@
         function generateNumberCards() {
             const numbersContainer = document.getElementById("numbersContainer");
             numbersContainer.innerHTML = ''; // مسح المحتوى السابق
-            const numberCount = Math.min(remainingNames.length, 10); // تحديد الحد الأقصى للأرقام
+            const numberCount = Math.min(remainingNames.length + 1, 10); // تحديد الحد الأقصى للأرقام
             for (let i = 1; i <= numberCount; i++) {
                 const numberCard = document.createElement('div');
                 numberCard.className = 'number-card';
@@ -153,6 +183,7 @@
                 // إعادة تعيين الحقول
                 document.getElementById("amountInput").value = '';
                 document.getElementById("numberInputContainer").style.display = "none";
+                displayNames(); // إعادة عرض الأسماء بعد الحفظ
             }
         }
 
@@ -160,13 +191,7 @@
         window.onload = function() {
             const storedNames = JSON.parse(localStorage.getItem('remainingNames'));
             if (storedNames) remainingNames = storedNames;
-            const savedResults = JSON.parse(localStorage.getItem('savedData'));
-            if (savedResults) {
-                savedResults.forEach(result => {
-                    // شطب الأسماء التي تم حفظها مسبقًا
-                    document.getElementById("chosenName").classList.add('crossed-out');
-                });
-            }
+            displayNames(); // عرض الأسماء عند التحميل
         };
     </script>
 </body>
