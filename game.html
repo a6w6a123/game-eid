@@ -56,15 +56,27 @@
         .selected-number {
             background-color: #FF5733; /* تغيير اللون عند التحديد */
         }
+        .crossed-out {
+            text-decoration: line-through;
+            color: gray;
+        }
+        .countdown {
+            font-size: 24px;
+            color: #000;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
 
     <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
     <div id="namesContainer"></div>
+    <div class="countdown" id="countdown"></div>
     <div id="numberInputContainer">
         <h2>اختر رقم</h2>
         <div id="numbersContainer"></div>
+        <input type="number" id="amountInput" placeholder="أدخل المبلغ">
+        <button id="saveButton" onclick="saveResult()">حفظ</button>
     </div>
     <h2 class="chosen-name" id="chosenName"></h2>
     <button id="startButton" onclick="startGame()">ابدأ اللعبة</button>
@@ -77,12 +89,23 @@
         // بدء اللعبة
         function startGame() {
             if (remainingNames.length > 0) {
-                const chosenIndex = Math.floor(Math.random() * remainingNames.length);
-                const chosenName = remainingNames[chosenIndex];
-                document.getElementById("chosenName").innerText = chosenName;
-                remainingNames.splice(chosenIndex, 1);
-                document.getElementById("numberInputContainer").style.display = "block";
-                generateNumberCards();
+                // بدء العد التنازلي
+                let countdownTime = 10;
+                document.getElementById("countdown").innerText = countdownTime;
+                const countdownInterval = setInterval(() => {
+                    countdownTime--;
+                    document.getElementById("countdown").innerText = countdownTime;
+
+                    if (countdownTime <= 0) {
+                        clearInterval(countdownInterval);
+                        const chosenIndex = Math.floor(Math.random() * remainingNames.length);
+                        const chosenName = remainingNames[chosenIndex];
+                        document.getElementById("chosenName").innerText = chosenName;
+                        remainingNames.splice(chosenIndex, 1);
+                        document.getElementById("numberInputContainer").style.display = "block";
+                        generateNumberCards();
+                    }
+                }, 1000);
             }
         }
 
@@ -109,17 +132,42 @@
             const card = Array.from(numberCards).find(card => card.innerText == selectedNumber);
             if (card) {
                 card.classList.add('selected-number');
-                saveResult(selectedNumber);
             }
         }
 
         // حفظ النتيجة
-        function saveResult(selectedNumber) {
+        function saveResult() {
             const chosenName = document.getElementById("chosenName").innerText;
-            const savedResults = JSON.parse(localStorage.getItem('savedData')) || [];
-            savedResults.push({ name: chosenName, number: selectedNumber });
-            localStorage.setItem('savedData', JSON.stringify(savedResults));
+            const selectedNumber = document.querySelector('.selected-number');
+
+            if (selectedNumber) {
+                const amount = document.getElementById("amountInput").value;
+                const savedResults = JSON.parse(localStorage.getItem('savedData')) || [];
+                savedResults.push({ name: chosenName, number: selectedNumber.innerText, amount: amount });
+                localStorage.setItem('savedData', JSON.stringify(savedResults));
+
+                // شطب الاسم والرقم
+                document.getElementById("chosenName").classList.add('crossed-out');
+                selectedNumber.classList.add('crossed-out');
+
+                // إعادة تعيين الحقول
+                document.getElementById("amountInput").value = '';
+                document.getElementById("numberInputContainer").style.display = "none";
+            }
         }
+
+        // عند تحميل الصفحة
+        window.onload = function() {
+            const storedNames = JSON.parse(localStorage.getItem('remainingNames'));
+            if (storedNames) remainingNames = storedNames;
+            const savedResults = JSON.parse(localStorage.getItem('savedData'));
+            if (savedResults) {
+                savedResults.forEach(result => {
+                    // شطب الأسماء التي تم حفظها مسبقًا
+                    document.getElementById("chosenName").classList.add('crossed-out');
+                });
+            }
+        };
     </script>
 </body>
 </html>
