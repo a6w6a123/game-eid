@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عرض اللعبة</title>
+    <title>رابط المشاهدة</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,88 +16,57 @@
             color: #333;
         }
         .result-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
             margin-top: 20px;
         }
         .result-card {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 120px;
-            height: 120px;
-            margin: 10px;
             background-color: #FFA500;
             color: white;
-            font-size: 18px;
+            margin: 10px;
+            padding: 10px;
             border-radius: 10px;
-            transition: transform 0.2s;
-            flex-direction: column;
         }
-        .result-card:hover {
-            transform: scale(1.05);
-        }
-        .message {
-            font-size: 20px;
-            color: #FF0000;
-            margin-top: 20px;
+        .crossed-out {
+            text-decoration: line-through;
+            color: gray;
         }
     </style>
 </head>
 <body>
 
-    <h1 id="gameTitle">عرض اللعبة</h1>
+    <h1>نتائج اللعبة</h1>
     <div class="result-container" id="resultContainer"></div>
-    <div class="message" id="message"></div>
+    <button onclick="clearResults()">مسح النتائج</button>
 
     <script>
-        const gameStartDate = localStorage.getItem('gameStartDate'); // الحصول على تاريخ بدء اللعبة
-        const gameTitle = localStorage.getItem('gameTitle') || "لعبة اختيار اسم عشوائي";
-        document.getElementById("gameTitle").innerText = gameTitle;
-
-        // التحقق من تاريخ بدء اللعبة
-        function checkGameStartTime() {
-            const currentTime = new Date();
-            const startTime = new Date(gameStartDate);
-            
-            if (currentTime < startTime) {
-                document.getElementById("message").innerText = `ستبدأ اللعبة في ${startTime.toLocaleString()}...`;
-                setTimeout(() => {
-                    alert(`ستبدأ اللعبة في ${startTime.toLocaleString()}...`);
-                }, 1000); // تأخير ظهور التنبيه
-                return false; // اللعبة لم تبدأ بعد
-            }
-            return true; // اللعبة بدأت
-        }
-
-        // عرض النتائج
+        // عرض النتائج المحفوظة
         function displayResults() {
-            const savedData = JSON.parse(localStorage.getItem('savedData')) || [];
             const resultContainer = document.getElementById("resultContainer");
+            const savedResults = JSON.parse(localStorage.getItem('savedData')) || [];
             resultContainer.innerHTML = ''; // مسح المحتوى السابق
-            
-            if (savedData.length > 0) {
-                savedData.forEach(result => {
+
+            if (savedResults.length === 0) {
+                resultContainer.innerHTML = '<p>لا توجد نتائج لعرضها.</p>';
+            } else {
+                savedResults.forEach(result => {
                     const resultCard = document.createElement('div');
                     resultCard.className = 'result-card';
-                    resultCard.innerHTML = `
-                        <div>${result.name}</div>
-                        <div>رقم: ${result.number}</div>
-                        <div>مبلغ: ${result.amount}</div>
-                    `;
+                    resultCard.innerHTML = `<p>الاسم: ${result.name}</p>
+                                            <p>الرقم: ${result.number}</p>
+                                            <p>المبلغ: ${result.amount}</p>`;
                     resultContainer.appendChild(resultCard);
                 });
-            } else {
-                resultContainer.innerHTML = '<p>لا توجد بيانات للعرض.</p>';
             }
+        }
+
+        // مسح النتائج
+        function clearResults() {
+            localStorage.removeItem('savedData');
+            displayResults(); // تحديث العرض
         }
 
         // عند تحميل الصفحة
         window.onload = function() {
-            if (checkGameStartTime()) {
-                displayResults(); // عرض النتائج إذا كانت اللعبة قد بدأت
-            }
+            displayResults(); // عرض النتائج عند التحميل
         };
     </script>
 </body>
