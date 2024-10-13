@@ -64,6 +64,9 @@
             displayResults(); // تحديث العرض
         }
 
+        // تحديث البيانات كل 5 ثواني
+        setInterval(displayResults, 5000);
+
         // عند تحميل الصفحة
         window.onload = function() {
             displayResults(); // عرض النتائج عند التحميل
