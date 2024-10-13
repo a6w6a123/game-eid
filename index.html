@@ -42,28 +42,6 @@
         button:hover {
             background-color: #45a049;
         }
-        .card {
-            display: inline-block;
-            width: 60px;
-            height: 60px;
-            margin: 10px;
-            background-color: #FFA500;
-            color: white;
-            font-size: 20px;
-            border-radius: 10px;
-            line-height: 60px;
-            cursor: pointer;
-            position: relative;
-            transition: transform 0.2s;
-        }
-        .card:hover {
-            transform: scale(1.1);
-        }
-        .chosen-name {
-            margin-top: 20px;
-            font-size: 24px;
-            color: #FF0000;
-        }
         #resultsTable, #namesTable {
             margin-top: 20px;
             width: 100%;
@@ -82,45 +60,17 @@
             display: none;
             margin-top: 20px;
         }
-        .number-card {
-            display: inline-block;
-            width: 60px;
-            height: 60px;
-            margin: 10px;
-            background-color: #4caf50;
-            color: white;
-            font-size: 20px;
-            border-radius: 10px;
-            line-height: 60px;
-            cursor: pointer;
-            position: relative;
-        }
-        .selected-number {
-            background-color: #FF5733;
-        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <button onclick="showPage('gamePage')">اللعبة</button>
         <button onclick="showPage('settingsPage')">لوحة التحكم</button>
+        <button onclick="openGamePage()">لعب</button>
         <button onclick="showPage('endPage')">صفحة النهاية</button>
     </div>
 
-    <div class="container" id="gamePage">
-        <h1 id="gameTitle">لعبة اختيار اسم عشوائي</h1>
-        <div id="nameListDisplay"></div>
-        <h2 class="chosen-name" id="chosenName"></h2>
-        <div id="numberInputContainer">
-            <h2>اختر رقمًا:</h2>
-            <div id="numberCardsContainer"></div>
-            <input type="number" id="amountInput" placeholder="أدخل المبلغ">
-            <button id="submitButton" onclick="submitChoice()">إرسال</button>
-        </div>
-        <button onclick="startCountdown()">بدء</button>
-    </div>
-
+    <!-- لوحة التحكم -->
     <div class="container" id="settingsPage">
         <h1>إعدادات اللعبة</h1>
         <label for="gameTitleInput">عنوان اللعبة:</label>
@@ -163,10 +113,11 @@
         <a href="#" id="viewGameLink" style="display:none;">انقر هنا لمشاهدة اللعبة</a>
     </div>
 
+    <!-- صفحة النهاية -->
     <div class="container" id="endPage">
         <h1>انتهت الأسماء!</h1>
         <h2 id="finalMessage"></h2>
-        <button onclick="showPage('gamePage')">العودة للعبة</button>
+        <button onclick="showPage('settingsPage')">العودة للوحة التحكم</button>
     </div>
 
     <audio id="countdownSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
@@ -174,177 +125,73 @@
     <script>
         let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
         const savedData = JSON.parse(localStorage.getItem('savedData')) || [];
-        let countdownInterval;
 
+        // تحديث عنوان اللعبة
         function updateGameTitle() {
             const titleInput = document.getElementById("gameTitleInput").value;
-            document.getElementById("gameTitle").innerText = titleInput;
+            localStorage.setItem('gameTitle', titleInput); // حفظ العنوان
         }
 
+        // عرض الصفحة المحددة
         function showPage(pageId) {
-            document.getElementById("gamePage").style.display = "none";
             document.getElementById("settingsPage").style.display = "none";
             document.getElementById("endPage").style.display = "none";
             document.getElementById(pageId).style.display = "block";
 
-            if (pageId === 'gamePage') {
-                updateNameListDisplay();
-            } else if (pageId === 'settingsPage') {
-                updateNamesTable();
-                updateResultsTable();
-                document.getElementById("endMessageInput").value = localStorage.getItem('endMessage') || "";
-            } else if (pageId === 'endPage') {
+            if (pageId === 'endPage') {
                 document.getElementById("finalMessage").innerText = localStorage.getItem('endMessage') || "لا توجد رسالة.";
             }
         }
 
-        function startCountdown() {
-            const nameListDisplay = document.getElementById("nameListDisplay");
-            nameListDisplay.innerHTML = '';
-            remainingNames.forEach(name => {
-                const card = document.createElement("div");
-                card.className = "card";
-                card.innerText = name;
-                nameListDisplay.appendChild(card);
-            });
-
-            let countdown = 10;
-            const countdownDisplay = document.createElement("h2");
-            countdownDisplay.innerText = countdown;
-            nameListDisplay.appendChild(countdownDisplay);
-
-            countdownInterval = setInterval(() => {
-                countdown--;
-                countdownDisplay.innerText = countdown;
-                if (countdown <= 0) {
-                    clearInterval(countdownInterval);
-                    chooseRandomName();
-                }
-            }, 1000);
-        }
-
-        function chooseRandomName() {
-            if (remainingNames.length === 0) {
-                showPage('endPage');
-                return;
-            }
-
-            const randomIndex = Math.floor(Math.random() * remainingNames.length);
-            const chosenName = remainingNames[randomIndex];
-            document.getElementById("chosenName").innerText = chosenName;
-
-            document.getElementById("numberInputContainer").style.display = "block";
-            document.getElementById("numberCardsContainer").innerHTML = '';
-
-            const numberOfCards = remainingNames.length;
-            for (let i = 1; i <= numberOfCards; i++) {
-                const numberCard = document.createElement("div");
-                numberCard.className = "number-card";
-                numberCard.innerText = i;
-                numberCard.onclick = () => selectNumber(i, numberCard);
-                document.getElementById("numberCardsContainer").appendChild(numberCard);
-            }
-
-            remainingNames.splice(randomIndex, 1);
+        // إضافة اسم
+        function addName() {
+            const namesInput = document.getElementById("namesInput");
+            const names = namesInput.value.split(',').map(name => name.trim()).filter(name => name);
+            remainingNames.push(...names);
+            namesInput.value = ''; // مسح الحقل بعد الإضافة
             localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
+            updateNamesTable();
         }
 
-        let selectedNumber = null;
-
-        function selectNumber(number, element) {
-            selectedNumber = number;
-            document.querySelectorAll(".number-card").forEach(card => card.classList.remove("selected-number"));
-            element.classList.add("selected-number");
-        }
-
-        function submitChoice() {
-            const amount = document.getElementById("amountInput").value;
-            const chosenName = document.getElementById("chosenName").innerText;
-
-            if (!chosenName || !amount || !selectedNumber) return;
-
-            savedData.push({ name: chosenName, amount: amount, number: selectedNumber });
-            localStorage.setItem('savedData', JSON.stringify(savedData));
-
-            document.getElementById("amountInput").value = "";
-            document.getElementById("chosenName").innerText = "";
-            selectedNumber = null;
-            document.getElementById("numberInputContainer").style.display = "none";
-
-            updateResultsTable();
-        }
-
-        function updateNameListDisplay() {
-            const nameListDisplay = document.getElementById("nameListDisplay");
-            nameListDisplay.innerHTML = '';
-            remainingNames.forEach(name => {
-                const card = document.createElement("div");
-                card.className = "card";
-                card.innerText = name;
-                nameListDisplay.appendChild(card);
-            });
-        }
-
+        // تحديث الجدول الخاص بالأسماء
         function updateNamesTable() {
-            const tableBody = document.getElementById("namesTableBody");
-            tableBody.innerHTML = '';
+            const namesTableBody = document.getElementById("namesTableBody");
+            namesTableBody.innerHTML = ''; // مسح المحتوى السابق
             remainingNames.forEach((name, index) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `<td>${name}</td><td><button onclick="removeName(${index})">حذف</button></td>`;
-                tableBody.appendChild(row);
+                namesTableBody.innerHTML += `<tr><td>${name}</td><td><button onclick="removeName(${index})">حذف</button></td></tr>`;
             });
         }
 
+        // إزالة اسم
         function removeName(index) {
             remainingNames.splice(index, 1);
             localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
             updateNamesTable();
         }
 
-        function updateResultsTable() {
-            const resultsTableBody = document.getElementById("resultsTableBody");
-            resultsTableBody.innerHTML = '';
-            savedData.forEach((data, index) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `<td>${data.name}</td><td>${data.amount}</td><td>${data.number}</td><td><button onclick="deleteResult(${index})">حذف</button></td>`;
-                resultsTableBody.appendChild(row);
-            });
-        }
-
-        function deleteResult(index) {
-            savedData.splice(index, 1);
-            localStorage.setItem('savedData', JSON.stringify(savedData));
-            updateResultsTable();
-        }
-
-        function addName() {
-            const namesInput = document.getElementById("namesInput");
-            const names = namesInput.value.split(',').map(name => name.trim()).filter(name => name);
-            remainingNames.push(...names);
-            localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
-            namesInput.value = '';
-            updateNamesTable();
-        }
-
-        function printResults() {
-            const printWindow = window.open("", "PRINT", "height=400,width=600");
-            printWindow.document.write("<html><head><title>نتائج اللعبة</title></head><body><h1>نتائج اللعبة</h1><table border='1'><tr><th>الاسم</th><th>المبلغ</th><th>الرقم</th></tr>");
-            savedData.forEach(data => {
-                printWindow.document.write(`<tr><td>${data.name}</td><td>${data.amount}</td><td>${data.number}</td></tr>`);
-            });
-            printWindow.document.write("</table></body></html>");
-            printWindow.document.close();
-            printWindow.print();
-        }
-
+        // إنشاء رابط لمشاهدة اللعبة
         function generateGameLink() {
             const dateTime = document.getElementById("linkDateTime").value;
-            const gameLink = `http://yourgameurl.com?start=${encodeURIComponent(dateTime)}`;
-            const linkElement = document.getElementById("viewGameLink");
-            linkElement.href = gameLink;
-            linkElement.style.display = "inline";
-            window.open(gameLink, "_blank");  // يفتح الرابط تلقائيًا في نافذة جديدة
+            const title = localStorage.getItem('gameTitle') || "لعبة اختيار اسم عشوائي";
+
+            const link = `http://example.com/game.html?dateTime=${encodeURIComponent(dateTime)}&title=${encodeURIComponent(title)}`;
+            document.getElementById("viewGameLink").href = link;
+            document.getElementById("viewGameLink").style.display = "block";
         }
+
+        // فتح صفحة اللعبة
+        function openGamePage() {
+            window.open('game.html', '_blank');
+        }
+
+        // عند تحميل الصفحة
+        window.onload = function() {
+            const storedNames = JSON.parse(localStorage.getItem('remainingNames'));
+            if (storedNames) remainingNames = storedNames;
+            const savedResults = JSON.parse(localStorage.getItem('savedData'));
+            if (savedResults) savedData.push(...savedResults);
+            updateNamesTable();
+        };
     </script>
 </body>
 </html>
