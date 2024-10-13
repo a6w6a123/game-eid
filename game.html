@@ -96,6 +96,8 @@
     </div>
     <h2 class="chosen-name" id="chosenName"></h2>
     <button id="startButton" onclick="startGame()">ابدأ اللعبة</button>
+    <button id="generateLinkButton" onclick="generateViewLink()">إنشاء رابط المشاهدة</button>
+    <div id="viewLinkContainer" style="margin-top: 20px;"></div>
 
     <script>
         let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
@@ -185,6 +187,12 @@
                 document.getElementById("numberInputContainer").style.display = "none";
                 displayNames(); // إعادة عرض الأسماء بعد الحفظ
             }
+        }
+
+        // إنشاء رابط المشاهدة
+        function generateViewLink() {
+            const link = window.location.origin + '/view.html'; // رابط صفحة المشاهدة
+            document.getElementById("viewLinkContainer").innerHTML = `<p>رابط المشاهدة: <a href="${link}" target="_blank">${link}</a></p>`;
         }
 
         // عند تحميل الصفحة
