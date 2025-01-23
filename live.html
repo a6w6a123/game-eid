@@ -20,6 +20,33 @@
             color: #FF0000;
             margin-top: 20px;
         }
+        .countdown {
+            font-size: 24px;
+            color: #000;
+            margin-top: 20px;
+        }
+        .names-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .card {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 80px;
+            height: 80px;
+            margin: 10px;
+            background-color: #FFA500;
+            color: white;
+            font-size: 20px;
+            border-radius: 10px;
+        }
+        .crossed-out {
+            text-decoration: line-through;
+            color: gray;
+        }
     </style>
 </head>
 <body>
@@ -32,15 +59,45 @@
     </div>
 
     <h1>مشاهدة القرعة مباشرة</h1>
-    <div class="chosen-name" id="liveChosenName"></div>
+    <div class="countdown" id="countdown"></div>
+    <div class="chosen-name" id="chosenName"></div>
+    <div class="names-container" id="namesContainer"></div>
 
     <script>
+        // تحديث العرض كل ثانية
         function updateLiveView() {
+            // عرض الاسم المختار
             const chosenName = localStorage.getItem('lastChosenName') || "لم يتم اختيار اسم بعد";
-            document.getElementById("liveChosenName").innerText = chosenName;
+            document.getElementById("chosenName").innerText = `الاسم المختار: ${chosenName}`;
+
+            // عرض الأسماء المتبقية
+            const remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
+            const namesContainer = document.getElementById("namesContainer");
+            namesContainer.innerHTML = '';
+            remainingNames.forEach(name => {
+                const nameCard = document.createElement('div');
+                nameCard.className = 'card';
+                nameCard.innerText = name;
+                namesContainer.appendChild(nameCard);
+            });
+
+            // عرض العد التنازلي
+            const gameStartTime = localStorage.getItem('gameStartTime');
+            if (gameStartTime) {
+                const selectedDate = new Date(gameStartTime);
+                const currentDate = new Date();
+                const timeDiff = selectedDate - currentDate;
+
+                if (timeDiff > 0) {
+                    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+                    document.getElementById("countdown").innerText = `الوقت المتبقي: ${seconds} ثواني`;
+                } else {
+                    document.getElementById("countdown").innerText = "اللعبة بدأت!";
+                }
+            }
         }
 
-        // تحديث العرض كل ثانية
+        // تحديث الصفحة كل ثانية
         setInterval(updateLiveView, 1000);
 
         // عند تحميل الصفحة
