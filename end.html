@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة النهاية</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button onclick="window.location.href='index.html'">لوحة التحكم</button>
+        <button onclick="window.location.href='game.html'">لعب</button>
+        <button onclick="window.location.href='view.html'">عرض النتائج</button>
+        <button onclick="window.location.href='live.html'">مشاهدة القرعة مباشرة</button>
+    </div>
+
+    <h1>انتهت الأسماء!</h1>
+    <h2 id="finalMessage"></h2>
+    <button onclick="window.location.href='index.html'">العودة للوحة التحكم</button>
+
+    <script>
+        // عرض رسالة النهاية
+        const finalMessage = localStorage.getItem('endMessage') || "لا توجد رسالة.";
+        document.getElementById("finalMessage").innerText = finalMessage;
+    </script>
+</body>
+</html>
