@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رابط المشاهدة</title>
+    <title>عرض النتائج</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -33,6 +33,13 @@
 </head>
 <body>
 
+    <div class="header">
+        <button onclick="window.location.href='index.html'">لوحة التحكم</button>
+        <button onclick="window.location.href='game.html'">لعب</button>
+        <button onclick="window.location.href='view.html'">عرض النتائج</button>
+        <button onclick="window.location.href='live.html'">مشاهدة القرعة مباشرة</button>
+    </div>
+
     <h1>نتائج اللعبة</h1>
     <div class="result-container" id="resultContainer"></div>
     <button onclick="clearResults()">مسح النتائج</button>
@@ -42,7 +49,7 @@
         function displayResults() {
             const resultContainer = document.getElementById("resultContainer");
             const savedResults = JSON.parse(localStorage.getItem('savedData')) || [];
-            resultContainer.innerHTML = ''; // مسح المحتوى السابق
+            resultContainer.innerHTML = '';
 
             if (savedResults.length === 0) {
                 resultContainer.innerHTML = '<p>لا توجد نتائج لعرضها.</p>';
