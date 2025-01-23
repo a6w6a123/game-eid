@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة اختيار اسم عشوائي</title>
+    <title>لوحة التحكم</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.2.0/tagify.css">
     <style>
         body {
@@ -66,8 +66,9 @@
 
     <div class="header">
         <button onclick="showPage('settingsPage')">لوحة التحكم</button>
-        <button onclick="openGamePage()">لعب</button>
-        <button onclick="showPage('endPage')">صفحة النهاية</button>
+        <button onclick="window.location.href='game.html'">لعب</button>
+        <button onclick="window.location.href='view.html'">عرض النتائج</button>
+        <button onclick="window.location.href='live.html'">مشاهدة القرعة مباشرة</button>
     </div>
 
     <!-- لوحة التحكم -->
@@ -107,20 +108,10 @@
         <h2>نص نهاية اللعبة:</h2>
         <textarea id="endMessageInput" placeholder="أدخل نص نهاية اللعبة" oninput="localStorage.setItem('endMessage', this.value)"></textarea>
         
-        <h2>رابط مشاهدة اللعبة:</h2>
-        <input type="datetime-local" id="linkDateTime" placeholder="تاريخ ووقت فتح اللعبة">
-        <button onclick="generateGameLink()">إنشاء رابط لمشاهدة اللعبة</button>
-        <a href="#" id="viewGameLink" style="display:none;">انقر هنا لمشاهدة اللعبة</a>
+        <h2>تاريخ ووقت بدء اللعبة:</h2>
+        <input type="datetime-local" id="gameStartTime">
+        <button onclick="saveGameStartTime()">حفظ التاريخ</button>
     </div>
-
-    <!-- صفحة النهاية -->
-    <div class="container" id="endPage">
-        <h1>انتهت الأسماء!</h1>
-        <h2 id="finalMessage"></h2>
-        <button onclick="showPage('settingsPage')">العودة للوحة التحكم</button>
-    </div>
-
-    <audio id="countdownSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
 
     <script>
         let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
@@ -129,18 +120,12 @@
         // تحديث عنوان اللعبة
         function updateGameTitle() {
             const titleInput = document.getElementById("gameTitleInput").value;
-            localStorage.setItem('gameTitle', titleInput); // حفظ العنوان
+            localStorage.setItem('gameTitle', titleInput);
         }
 
         // عرض الصفحة المحددة
         function showPage(pageId) {
-            document.getElementById("settingsPage").style.display = "none";
-            document.getElementById("endPage").style.display = "none";
-            document.getElementById(pageId).style.display = "block";
-
-            if (pageId === 'endPage') {
-                document.getElementById("finalMessage").innerText = localStorage.getItem('endMessage') || "لا توجد رسالة.";
-            }
+            document.getElementById("settingsPage").style.display = "block";
         }
 
         // إضافة اسم
@@ -148,7 +133,7 @@
             const namesInput = document.getElementById("namesInput");
             const names = namesInput.value.split(',').map(name => name.trim()).filter(name => name);
             remainingNames.push(...names);
-            namesInput.value = ''; // مسح الحقل بعد الإضافة
+            namesInput.value = '';
             localStorage.setItem('remainingNames', JSON.stringify(remainingNames));
             updateNamesTable();
         }
@@ -156,7 +141,7 @@
         // تحديث الجدول الخاص بالأسماء
         function updateNamesTable() {
             const namesTableBody = document.getElementById("namesTableBody");
-            namesTableBody.innerHTML = ''; // مسح المحتوى السابق
+            namesTableBody.innerHTML = '';
             remainingNames.forEach((name, index) => {
                 namesTableBody.innerHTML += `<tr><td>${name}</td><td><button onclick="removeName(${index})">حذف</button></td></tr>`;
             });
@@ -169,14 +154,15 @@
             updateNamesTable();
         }
 
-        // إنشاء رابط لمشاهدة اللعبة
-        function generateGameLink() {
-            const dateTime = document.getElementById("linkDateTime").value;
-            const title = localStorage.getItem('gameTitle') || "لعبة اختيار اسم عشوائي";
-
-            const link = `http://example.com/game.html?dateTime=${encodeURIComponent(dateTime)}&title=${encodeURIComponent(title)}`;
-            document.getElementById("viewGameLink").href = link;
-            document.getElementById("viewGameLink").style.display = "block";
+        // حفظ تاريخ بدء اللعبة
+        function saveGameStartTime() {
+            const gameStartTime = document.getElementById("gameStartTime").value;
+            if (gameStartTime) {
+                localStorage.setItem('gameStartTime', gameStartTime);
+                alert("تم حفظ تاريخ بدء اللعبة!");
+            } else {
+                alert("الرجاء اختيار تاريخ ووقت صحيحين.");
+            }
         }
 
         // فتح صفحة اللعبة
@@ -191,6 +177,12 @@
             const savedResults = JSON.parse(localStorage.getItem('savedData'));
             if (savedResults) savedData.push(...savedResults);
             updateNamesTable();
+
+            // استعادة تاريخ بدء اللعبة
+            const gameStartTime = localStorage.getItem('gameStartTime');
+            if (gameStartTime) {
+                document.getElementById("gameStartTime").value = gameStartTime;
+            }
         };
     </script>
 </body>
