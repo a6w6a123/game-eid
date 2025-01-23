@@ -81,6 +81,9 @@
         button:hover {
             background-color: #0056b3;
         }
+        #viewLinkContainer {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -103,6 +106,8 @@
     </div>
     <h2 class="chosen-name" id="chosenName"></h2>
     <button id="startButton" onclick="startGame()">ابدأ اللعبة</button>
+    <button id="generateLinkButton" onclick="generateViewLink()">إنشاء رابط المشاهدة</button>
+    <div id="viewLinkContainer" style="margin-top: 20px;"></div>
 
     <script>
         let remainingNames = JSON.parse(localStorage.getItem('remainingNames')) || [];
@@ -197,6 +202,17 @@
                 document.getElementById("numberInputContainer").style.display = "none";
                 displayNames();
             }
+        }
+
+        // إنشاء رابط المشاهدة
+        function generateViewLink() {
+            const link = window.location.origin + '/live.html';
+            navigator.clipboard.writeText(link).then(() => {
+                alert("تم نسخ رابط المشاهدة إلى الحافظة: " + link);
+            }).catch(() => {
+                alert("تعذر نسخ الرابط، يرجى نسخه يدويًا: " + link);
+            });
+            document.getElementById("viewLinkContainer").innerHTML = `<p>رابط المشاهدة: <a href="${link}" target="_blank">${link}</a></p>`;
         }
 
         // عند تحميل الصفحة
