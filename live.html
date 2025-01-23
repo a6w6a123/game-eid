@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشاهدة القرعة مباشرة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .chosen-name {
+            font-size: 24px;
+            color: #FF0000;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button onclick="window.location.href='index.html'">لوحة التحكم</button>
+        <button onclick="window.location.href='game.html'">لعب</button>
+        <button onclick="window.location.href='view.html'">عرض النتائج</button>
+        <button onclick="window.location.href='live.html'">مشاهدة القرعة مباشرة</button>
+    </div>
+
+    <h1>مشاهدة القرعة مباشرة</h1>
+    <div class="chosen-name" id="liveChosenName"></div>
+
+    <script>
+        function updateLiveView() {
+            const chosenName = localStorage.getItem('lastChosenName') || "لم يتم اختيار اسم بعد";
+            document.getElementById("liveChosenName").innerText = chosenName;
+        }
+
+        // تحديث العرض كل ثانية
+        setInterval(updateLiveView, 1000);
+
+        // عند تحميل الصفحة
+        window.onload = function() {
+            updateLiveView();
+        };
+    </script>
+</body>
+</html>
